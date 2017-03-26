@@ -41,66 +41,66 @@ Eigen::MatrixXd calc_cov( c_Matrix_internal mat){
   return (((centered.adjoint()*centered)/double(mat.rows()-1)).triangularView<Eigen::UnitUpper>());  
 }
 
-
-Eigen::MatrixXd calc_cov_daal( Matrix_internal mat){
-  using namespace daal;
-  using namespace daal::data_management;
-  using namespace daal::algorithms;
-  using namespace daal::services;
-  
-  int *dim;
-  int nFeatures, nObservations;
-  double *mean;
-
-  /* Convert input arguments to C types */
-
-  double *x = mat.data();
-  
-  /* Get input matrix size */
-  
-  nObservations = mat.rows();
-  nFeatures     = mat.cols();
-  
-  /* Create structure-of-arrays (SOA) numeric table to store input data */
-  SharedPtr<SOANumericTable> dataTable(new SOANumericTable(nFeatures, nObservations));
-  for (int i = 0; i < nFeatures; i++)
-  {
-    dataTable->setArray(x + i*nObservations, i);
-  }
-  
-  /* Allocate memory to store results */
-  Eigen::MatrixXd cov(nFeatures,nFeatures);
-  
-  mean = new double[nFeatures];
-  
-  /* Create homogeneous numeric tables to store results */
-  SharedPtr<HomogenNumericTable<> > covarianceTable (new HomogenNumericTable<>(cov.data(), nFeatures, nFeatures));
-  SharedPtr<HomogenNumericTable<> > meanTable       (new HomogenNumericTable<>(mean, nFeatures, 1));
-  
-  /* Create algorithm to compute covariance matrix using default method */
-  covariance::Batch<> algorithm;
-  algorithm.input.set(covariance::data, dataTable);
-  
-  /* Create object to store the results of DAAL computations */
-  SharedPtr<covariance::Result> result(new covariance::Result());
-  
-  /* Provide memory for storing the results of DAAL computations */
-  result->set(covariance::covariance, covarianceTable);
-  result->set(covariance::mean,       meanTable);
-  
-  /* Register the object for storing results in DAAL algorithm */
-  algorithm.setResult(result);
-  
-  /* Compute covariance matrix */
-  algorithm.compute();
-  
-  delete [] mean;
-  
-  /* Return covariance matrix */
-  return cov;
-  
-  
-}
+// 
+// Eigen::MatrixXd calc_cov_daal( Matrix_internal mat){
+//   using namespace daal;
+//   using namespace daal::data_management;
+//   using namespace daal::algorithms;
+//   using namespace daal::services;
+//   
+//   int *dim;
+//   int nFeatures, nObservations;
+//   double *mean;
+// 
+//   /* Convert input arguments to C types */
+// 
+//   double *x = mat.data();
+//   
+//   /* Get input matrix size */
+//   
+//   nObservations = mat.rows();
+//   nFeatures     = mat.cols();
+//   
+//   /* Create structure-of-arrays (SOA) numeric table to store input data */
+//   SharedPtr<SOANumericTable> dataTable(new SOANumericTable(nFeatures, nObservations));
+//   for (int i = 0; i < nFeatures; i++)
+//   {
+//     dataTable->setArray(x + i*nObservations, i);
+//   }
+//   
+//   /* Allocate memory to store results */
+//   Eigen::MatrixXd cov(nFeatures,nFeatures);
+//   
+//   mean = new double[nFeatures];
+//   
+//   /* Create homogeneous numeric tables to store results */
+//   SharedPtr<HomogenNumericTable<> > covarianceTable (new HomogenNumericTable<>(cov.data(), nFeatures, nFeatures));
+//   SharedPtr<HomogenNumericTable<> > meanTable       (new HomogenNumericTable<>(mean, nFeatures, 1));
+//   
+//   /* Create algorithm to compute covariance matrix using default method */
+//   covariance::Batch<> algorithm;
+//   algorithm.input.set(covariance::data, dataTable);
+//   
+//   /* Create object to store the results of DAAL computations */
+//   SharedPtr<covariance::Result> result(new covariance::Result());
+//   
+//   /* Provide memory for storing the results of DAAL computations */
+//   result->set(covariance::covariance, covarianceTable);
+//   result->set(covariance::mean,       meanTable);
+//   
+//   /* Register the object for storing results in DAAL algorithm */
+//   algorithm.setResult(result);
+//   
+//   /* Compute covariance matrix */
+//   algorithm.compute();
+//   
+//   delete [] mean;
+//   
+//   /* Return covariance matrix */
+//   return cov;
+//   
+//   
+// }
 
 
 Eigen::MatrixXd calc_cov_mkl(Matrix_internal mat){
@@ -142,11 +142,11 @@ Eigen::MatrixXd calc_cov_mkl_exp(Matrix_external mat){
   return(calc_cov_mkl(mat));
 }
 
-
-//[[Rcpp::export(name="calc_cov_daal")]]
-Eigen::MatrixXd calc_cov_daal_exp( Matrix_external mat){
-  return(calc_cov_daal(mat));
-}
+// 
+// 
+// Eigen::MatrixXd calc_cov_daal_exp( Matrix_external mat){
+//   return(calc_cov_daal(mat));
+// }
 
 //[[Rcpp::export(name="calc_cov")]]
 Eigen::MatrixXd calc_cov_exp(Matrix_external mat){

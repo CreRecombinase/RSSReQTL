@@ -13,10 +13,6 @@ calc_cov_mkl <- function(mat) {
     .Call('RSSReQTL_calc_cov_mkl_exp', PACKAGE = 'RSSReQTL', mat)
 }
 
-calc_cov_daal <- function(mat) {
-    .Call('RSSReQTL_calc_cov_daal_exp', PACKAGE = 'RSSReQTL', mat)
-}
-
 calc_cov <- function(mat) {
     .Call('RSSReQTL_calc_cov_exp', PACKAGE = 'RSSReQTL', mat)
 }
