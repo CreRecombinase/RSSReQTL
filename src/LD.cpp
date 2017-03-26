@@ -102,45 +102,45 @@ Eigen::MatrixXd calc_cov( c_Matrix_internal mat){
 //   
 // }
 
+// 
+// Eigen::MatrixXd calc_cov_mkl(Matrix_internal mat){
+// 
+//   VSLSSTaskPtr task;
+// 
+//   
+// 
+// 
+//   int rows=mat.rows();
+//   int cols=mat.cols();
+//   Eigen::ArrayXd meana(cols);
+//   Eigen::ArrayXd vara(cols);
+//   
+//   double *x=mat.data();
+//   double *mean=meana.data(); 
+//   double *var= vara.data(); 
+//   double *w=0;
+//   Eigen::MatrixXd cov(cols,cols);
+//   MKL_INT p,n,xstorage,covstorage;
+//   int status;
+//   
+//   p=cols;
+//   n=rows;
+//   xstorage=VSL_SS_MATRIX_STORAGE_COLS;
+//   covstorage=VSL_SS_MATRIX_STORAGE_FULL;
+//   
+//   int errcode = vsldSSNewTask(&task,&p,&n,&xstorage,x,w,0);
+//     
+//   errcode = vsldSSEditCovCor(task,meana.data(),cov.data(),&covstorage,0,0);
+//   int estimates = VSL_SS_COV;
+//   status = vsldSSCompute(task,estimates,VSL_SS_METHOD_1PASS);
+//   status = vslSSDeleteTask(&task);
+//   return(cov);
+// }
 
-Eigen::MatrixXd calc_cov_mkl(Matrix_internal mat){
 
-  VSLSSTaskPtr task;
-
-  
-
-
-  int rows=mat.rows();
-  int cols=mat.cols();
-  Eigen::ArrayXd meana(cols);
-  Eigen::ArrayXd vara(cols);
-  
-  double *x=mat.data();
-  double *mean=meana.data(); 
-  double *var= vara.data(); 
-  double *w=0;
-  Eigen::MatrixXd cov(cols,cols);
-  MKL_INT p,n,xstorage,covstorage;
-  int status;
-  
-  p=cols;
-  n=rows;
-  xstorage=VSL_SS_MATRIX_STORAGE_COLS;
-  covstorage=VSL_SS_MATRIX_STORAGE_FULL;
-  
-  int errcode = vsldSSNewTask(&task,&p,&n,&xstorage,x,w,0);
-    
-  errcode = vsldSSEditCovCor(task,meana.data(),cov.data(),&covstorage,0,0);
-  int estimates = VSL_SS_COV;
-  status = vsldSSCompute(task,estimates,VSL_SS_METHOD_1PASS);
-  status = vslSSDeleteTask(&task);
-  return(cov);
-}
-
-//[[Rcpp::export(name="calc_cov_mkl")]]
-Eigen::MatrixXd calc_cov_mkl_exp(Matrix_external mat){
-  return(calc_cov_mkl(mat));
-}
+// Eigen::MatrixXd calc_cov_mkl_exp(Matrix_external mat){
+//   return(calc_cov_mkl(mat));
+// }
 
 // 
 // 

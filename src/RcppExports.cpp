@@ -29,17 +29,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// calc_cov_mkl_exp
-Eigen::MatrixXd calc_cov_mkl_exp(Matrix_external mat);
-RcppExport SEXP RSSReQTL_calc_cov_mkl_exp(SEXP matSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Matrix_external >::type mat(matSEXP);
-    rcpp_result_gen = Rcpp::wrap(calc_cov_mkl_exp(mat));
-    return rcpp_result_gen;
-END_RCPP
-}
 // calc_cov_exp
 Eigen::MatrixXd calc_cov_exp(Matrix_external mat);
 RcppExport SEXP RSSReQTL_calc_cov_exp(SEXP matSEXP) {

@@ -9,10 +9,6 @@ calc_dist <- function(map) {
     .Call('RSSReQTL_calc_dist_exp', PACKAGE = 'RSSReQTL', map)
 }
 
-calc_cov_mkl <- function(mat) {
-    .Call('RSSReQTL_calc_cov_mkl_exp', PACKAGE = 'RSSReQTL', mat)
-}
-
 calc_cov <- function(mat) {
     .Call('RSSReQTL_calc_cov_exp', PACKAGE = 'RSSReQTL', mat)
 }
