@@ -34,6 +34,7 @@ gen_LD <- function(ld_snpfile,ld_snplist,m=85,Ne=11490.672741,cutoff=1e-3){
 
 gen_eQTL <- function(eqtl_snpfile,eqtl_expfile,eqtl_explist,eqtl_snplist,scale_ortho_exp=T){
   
+  library(dplyr)
   stopifnot(file.exists(eqtl_expfile))
   exp_fgeneid <- read_vec(eqtl_expfile,"EXPinfo/fgeneid")[eqtl_explist]
   eqtl_snpdat <- read_2d_index_h5(eqtl_snpfile,"SNPdata","genotype",eqtl_snplist)
@@ -55,110 +56,109 @@ gen_eQTL <- function(eqtl_snpfile,eqtl_expfile,eqtl_explist,eqtl_snplist,scale_o
 }
   
   
-  run_RSS <- function(param_snpfile,param_expfile,snp_chunk,exp_chunk,tissue,
-                      scale_ortho_exp=F,m=85,Ne=11490.672741,cutoff=1e-3,
-                      logodds=NULL,sigb=NULL,exp_chunksize=1){
-    require(Matrix)
-    require(dplyr)
-    require(rssr)
-    require(RcppEigenH5)
-    library(h5)
-    library(BBmisc)
-    stopifnot(file.exists(param_snpfile),
-              file.exists(param_expfile))
-    
-    
-    eqtl_snpfile <-read_attr(param_snpfile,as.character(snp_chunk),paste0(tissue,"_filepath"))
-    eqtl_snp_chromosome <-read_attr(param_snpfile,as.character(snp_chunk),"chromosome")
-    stopifnot(file.exists(eqtl_snpfile))
-    
-    eqtl_snplist <-read_vec(param_snpfile,paste0(snp_chunk,"/",tissue))
-    eqtl_snpdat <- read_2d_index_h5(eqtl_snpfile,"SNPdata","genotype",eqtl_snplist)
-    
-    
-    if(exp_chunksize==1){
-      eqtl_explist <-read_vec(param_expfile,paste0("all/",tissue))[exp_chunk]
-      exp_fgeneid <- read_vec(param_expfile,"all/fgeneid")[exp_chunk]
+run_RSS <- function(param_snpfile,param_expfile,snp_chunk,exp_chunk,tissue,
+                    scale_ortho_exp=F,m=85,Ne=11490.672741,cutoff=1e-3,
+                    logodds=NULL,sigb=NULL,exp_chunksize=1){
+  require(Matrix)
+  require(dplyr)
+  require(rssr)
+  require(RcppEigenH5)
+  library(h5)
+  library(BBmisc)
+  stopifnot(file.exists(param_snpfile),
+            file.exists(param_expfile))
+  
+  
+  eqtl_snpfile <-read_attr(param_snpfile,as.character(snp_chunk),paste0(tissue,"_filepath"))
+  eqtl_snp_chromosome <-read_attr(param_snpfile,as.character(snp_chunk),"chromosome")
+  stopifnot(file.exists(eqtl_snpfile))
+  
+  eqtl_snplist <-read_vec(param_snpfile,paste0(snp_chunk,"/",tissue))
+  eqtl_snpdat <- read_2d_index_h5(eqtl_snpfile,"SNPdata","genotype",eqtl_snplist)
+  
+  
+  if(exp_chunksize==1){
+    eqtl_explist <-read_vec(param_expfile,paste0("all/",tissue))[exp_chunk]
+    exp_fgeneid <- read_vec(param_expfile,"all/fgeneid")[exp_chunk]
+    eqtl_expfile <- read_attr(param_expfile,"all",paste0(tissue,"_filepath"))
+  }else{
+    if(!exists_group(param_expfile,as.character(exp_chunk))){
+      eqtl_explist <-chunk(read_vec(param_expfile,paste0("all/",tissue)),chunk.size = exp_chunksize)[[exp_chunk]]
+      eqtl_fgeneid <-chunk(read_vec(param_expfile,paste0("all/fgeneid")),chunk.size = exp_chunksize)[[exp_chunk]]
       eqtl_expfile <- read_attr(param_expfile,"all",paste0(tissue,"_filepath"))
     }else{
-      if(!exists_group(param_expfile,as.character(exp_chunk))){
-        eqtl_explist <-chunk(read_vec(param_expfile,paste0("all/",tissue)),chunk.size = exp_chunksize)[[exp_chunk]]
-        eqtl_fgeneid <-chunk(read_vec(param_expfile,paste0("all/fgeneid")),chunk.size = exp_chunksize)[[exp_chunk]]
-        eqtl_expfile <- read_attr(param_expfile,"all",paste0(tissue,"_filepath"))
-      }else{
-        eqtl_explist <-read_vec(param_expfile,paste0(exp_chunk,"/",tissue))
-        exp_fgeneid <- read_vec(param_expfile,paste0(exp_chunk,"/fgeneid"))
-        eqtl_expfile <- read_attr(param_expfile,as.character(exp_chunk),paste0(tissue,"_filepath"))
-      }
+      eqtl_explist <-read_vec(param_expfile,paste0(exp_chunk,"/",tissue))
+      exp_fgeneid <- read_vec(param_expfile,paste0(exp_chunk,"/fgeneid"))
+      eqtl_expfile <- read_attr(param_expfile,as.character(exp_chunk),paste0(tissue,"_filepath"))
     }
+  }
+  
+  stopifnot(file.exists(eqtl_expfile))
+  eqtl_expdat <- read_2d_index_h5(eqtl_expfile,"EXPdata","expression",eqtl_explist)
+  
+  
+  eqtl_covdat <- read_2d_mat_h5(eqtl_expfile,"Covardat","covariates")
+  ortho_covdat <- rssr_orthogonalize_covar(cbind(1,eqtl_covdat))
+  
+  
+  teqtl_df <- list()
+  ortho_genodat <- orthogonalize_data(eqtl_snpdat,ortho_covdat)
+  ortho_expdat <- scale(orthogonalize_data(eqtl_expdat,ortho_covdat),center=scale_ortho_exp,scale=scale_ortho_exp)
+  
+  
+  for(i in 1:ncol(eqtl_expdat)){
+    teqtl_df[[i]] <-map_eqtl_lm(ortho_genodat,ortho_expdat[,i]) %>% mutate(fgeneid=exp_fgeneid[i])
+  }
+  
+  summary_stats <- bind_rows(teqtl_df)
+  
+  ld_ldf<-read_attr(param_snpfile,as.character(snp_chunk),"1kg_filepath")
+  stopifnot(file.exists(ld_ldf))
+  ld_snplist <- read_vec(param_snpfile,paste0("/",snp_chunk,"/1kg"))
+  
+  
+  snpA <-read_2d_index_h5(ld_ldf,"SNPdata","genotype",ld_snplist)
+  mapA <-read_vec(ld_ldf,"/SNPinfo/map")[ld_snplist]
+  
+  stopifnot(ncol(snpA)==length(ld_snplist),length(mapA)==length(ld_snplist))
+  
+  
+  
+  sp_R <- sp_calcLD(snpA,mapA,m,Ne,cutoff)
+  
+  # R <- RColumbo::gen_sparsemat(RColumbo::calcLD(hmata=snpA,hmatb = snpA,mapa = mapA,mapb = mapA,m = m,Ne=Ne,cutoff = cutoff,isDiag = T),istart=1,jstart=1,nSNPs = ncol(snpA),makeSymmetric = T)
+  
+  
+  
+  rm(snpA,mapA,eqtl_covdat)
+  
+  fit_dfl <- list()
+  summ_statl <- split(summary_stats,summary_stats$fgeneid)
+  for(i in 1:length(summ_statl)){
+    cat(i,"of ",length(summ_statl),"\n")
+    se <- summ_statl[[i]][["se"]]
+    betahat <- summ_statl[[i]][["betahat"]]
+    SiRiS <- SiRSi(sp_R,Si = 1/se)
     
-    stopifnot(file.exists(eqtl_expfile))
-    eqtl_expdat <- read_2d_index_h5(eqtl_expfile,"EXPdata","expression",eqtl_explist)
+    p <- length(betahat)
+    alpha0 <- ralpha(p = p)
+    mu0 <-rmu(p)
+    SiRiSr <- SiRiS%*%(alpha0*mu0)
+    fit_df <- grid_search_rss_varbvsr(SiRiS = SiRiS,sigma_beta = sigb,logodds=logodds,betahat = betahat,
+                                      se = se,talpha0 = alpha0,tmu0 = mu0,tSiRiSr0 = SiRiSr@x,tolerance = 1e-3,itermax = 100,verbose = T,lnz_tol = T)
     
-    
-    eqtl_covdat <- read_2d_mat_h5(eqtl_expfile,"Covardat","covariates")
-    ortho_covdat <- rssr_orthogonalize_covar(cbind(1,eqtl_covdat))
-    
-    
-    teqtl_df <- list()
-    ortho_genodat <- orthogonalize_data(eqtl_snpdat,ortho_covdat)
-    ortho_expdat <- scale(orthogonalize_data(eqtl_expdat,ortho_covdat),center=scale_ortho_exp,scale=scale_ortho_exp)
-    
-    
-    for(i in 1:ncol(eqtl_expdat)){
-      teqtl_df[[i]] <-map_eqtl_lm(ortho_genodat,ortho_expdat[,i]) %>% mutate(fgeneid=exp_fgeneid[i])
-    }
-    
-    summary_stats <- bind_rows(teqtl_df)
-    
-    ld_ldf<-read_attr(param_snpfile,as.character(snp_chunk),"1kg_filepath")
-    stopifnot(file.exists(ld_ldf))
-    ld_snplist <- read_vec(param_snpfile,paste0("/",snp_chunk,"/1kg"))
-    
-    
-    snpA <-read_2d_index_h5(ld_ldf,"SNPdata","genotype",ld_snplist)
-    mapA <-read_vec(ld_ldf,"/SNPinfo/map")[ld_snplist]
-    
-    stopifnot(ncol(snpA)==length(ld_snplist),length(mapA)==length(ld_snplist))
-    
-    
-    
-    sp_R <- sp_calcLD(snpA,mapA,m,Ne,cutoff)
+    fit_dfl[[i]] <- fit_df %>% mutate(fgeneid=exp_fgeneid[i])
+    gc()
+  }
+  fit_df <- bind_rows(fit_dfl) %>% mutate(snp_chunk=snp_chunk,exp_chunk=exp_chunk,snp_chromosome=eqtl_snp_chromosome)
+  return(fit_df)
+}
 
-    # R <- RColumbo::gen_sparsemat(RColumbo::calcLD(hmata=snpA,hmatb = snpA,mapa = mapA,mapb = mapA,m = m,Ne=Ne,cutoff = cutoff,isDiag = T),istart=1,jstart=1,nSNPs = ncol(snpA),makeSymmetric = T)
-    
-    
-    
-    rm(snpA,mapA,eqtl_covdat)
-    
-    fit_dfl <- list()
-    summ_statl <- split(summary_stats,summary_stats$fgeneid)
-    for(i in 1:length(summ_statl)){
-      cat(i,"of ",length(summ_statl),"\n")
-      se <- summ_statl[[i]][["se"]]
-      betahat <- summ_statl[[i]][["betahat"]]
-      SiRiS <- SiRSi(sp_R,Si = 1/se)
-      
-      p <- length(betahat)
-      alpha0 <- ralpha(p = p)
-      mu0 <-rmu(p)
-      SiRiSr <- SiRiS%*%(alpha0*mu0)
-      fit_df <- grid_search_rss_varbvsr(SiRiS = SiRiS,sigma_beta = sigb,logodds=logodds,betahat = betahat,
-                                        se = se,talpha0 = alpha0,tmu0 = mu0,tSiRiSr0 = SiRiSr@x,tolerance = 1e-3,itermax = 100,verbose = T,lnz_tol = T)
-      
-      fit_dfl[[i]] <- fit_df %>% mutate(fgeneid=exp_fgeneid[i])
-      gc()
-    }
-    fit_df <- bind_rows(fit_dfl) %>% mutate(snp_chunk=snp_chunk,exp_chunk=exp_chunk,snp_chromosome=eqtl_snp_chromosome)
-    return(fit_df)
-  }
-  
-  
-  
-  libpath <- function() {
-    cat(sprintf(
-      "%s/RSSReQTL/libs/RSSReQTL%s",
-      installed.packages()["RSSReQTL","LibPath"][1],
-      .Platform$dynlib.ext
-    ))
-  }
+
+libpath <- function() {
+  cat(sprintf(
+    "%s/RSSReQTL/libs/RSSReQTL%s",
+    installed.packages()["RSSReQTL","LibPath"][1],
+    .Platform$dynlib.ext
+  ))
+}
