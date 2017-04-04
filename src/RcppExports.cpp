@@ -29,6 +29,21 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// test_calc_shrink
+Eigen::MatrixXd test_calc_shrink(arrayxd_external map, Matrix_external Hpanel, const double Ne, const double m, const double cutoff);
+RcppExport SEXP RSSReQTL_test_calc_shrink(SEXP mapSEXP, SEXP HpanelSEXP, SEXP NeSEXP, SEXP mSEXP, SEXP cutoffSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arrayxd_external >::type map(mapSEXP);
+    Rcpp::traits::input_parameter< Matrix_external >::type Hpanel(HpanelSEXP);
+    Rcpp::traits::input_parameter< const double >::type Ne(NeSEXP);
+    Rcpp::traits::input_parameter< const double >::type m(mSEXP);
+    Rcpp::traits::input_parameter< const double >::type cutoff(cutoffSEXP);
+    rcpp_result_gen = Rcpp::wrap(test_calc_shrink(map, Hpanel, Ne, m, cutoff));
+    return rcpp_result_gen;
+END_RCPP
+}
 // calc_cov_exp
 Eigen::MatrixXd calc_cov_exp(Matrix_external mat);
 RcppExport SEXP RSSReQTL_calc_cov_exp(SEXP matSEXP) {

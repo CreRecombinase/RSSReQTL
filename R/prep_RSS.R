@@ -13,17 +13,37 @@
 # # em_logodds=F
 
 
-gen_LD <- function(ld_snpfile,ld_snplist,m=85,Ne=11490.672741,cutoff=1e-3){
-#  ld_ldf<-read_attr(param_snpfile,as.character(snp_chunk),"1kg_filepath")
+gen_LD <- function(ld_snpfile,ld_snplist,m=85,Ne=11490.672741,cutoff=1e-3,mapA=NULL){
+  #  ld_ldf<-read_attr(param_snpfile,as.character(snp_chunk),"1kg_filepath")
   stopifnot(file.exists(ld_snpfile))
-#  ld_snplist <- read_vec(param_snpfile,paste0("/",snp_chunk,"/1kg"))
+  #  ld_snplist <- read_vec(param_snpfile,paste0("/",snp_chunk,"/1kg"))
   
   
   snpA <-read_2d_index_h5(ld_snpfile,"SNPdata","genotype",ld_snplist)
-  mapA <-read_vec(ld_snpfile,"/SNPinfo/map")[ld_snplist]
+  if(is.null(mapA)){
+    mapA <-read_vec(ld_snpfile,"/SNPinfo/map")[ld_snplist]
+  }
   
   stopifnot(ncol(snpA)==length(ld_snplist),length(mapA)==length(ld_snplist))
+  
+  sp_R <- calcLD(snpA,mapA,m,Ne,cutoff)
+  return(sp_R)
+}
 
+
+gen_LD_sp <- function(ld_snpfile,ld_snplist,m=85,Ne=11490.672741,cutoff=1e-3,mapA=NULL){
+  #  ld_ldf<-read_attr(param_snpfile,as.character(snp_chunk),"1kg_filepath")
+  stopifnot(file.exists(ld_snpfile))
+  #  ld_snplist <- read_vec(param_snpfile,paste0("/",snp_chunk,"/1kg"))
+  
+  
+  snpA <-read_2d_index_h5(ld_snpfile,"SNPdata","genotype",ld_snplist)
+  if(is.null(mapA)){
+    mapA <-read_vec(ld_snpfile,"/SNPinfo/map")[ld_snplist]
+  }
+  
+  stopifnot(ncol(snpA)==length(ld_snplist),length(mapA)==length(ld_snplist))
+  
   sp_R <- sp_calcLD(snpA,mapA,m,Ne,cutoff)
   return(sp_R)
 }
@@ -58,7 +78,7 @@ gen_eQTL <- function(eqtl_snpfile,eqtl_expfile,eqtl_explist,eqtl_snplist,scale_o
   
 run_RSS <- function(param_snpfile,param_expfile,snp_chunk,exp_chunk,tissue,
                     scale_ortho_exp=F,m=85,Ne=11490.672741,cutoff=1e-3,
-                    logodds=NULL,sigb=NULL,exp_chunksize=1){
+                    logodds=NULL,sigb=NULL,exp_chunksize=1,sparseLD=FALSE){
   require(Matrix)
   require(dplyr)
   require(rssr)
@@ -123,8 +143,11 @@ run_RSS <- function(param_snpfile,param_expfile,snp_chunk,exp_chunk,tissue,
   stopifnot(ncol(snpA)==length(ld_snplist),length(mapA)==length(ld_snplist))
   
   
-  
-  sp_R <- sp_calcLD(snpA,mapA,m,Ne,cutoff)
+  if(sparseLD){
+    R <- sp_calcLD(snpA,mapA,m,Ne,cutoff)
+  }else{
+    R <- calcLD(snpA,mapA,m,Ne,cutoff)
+  }
   
   # R <- RColumbo::gen_sparsemat(RColumbo::calcLD(hmata=snpA,hmatb = snpA,mapa = mapA,mapb = mapA,m = m,Ne=Ne,cutoff = cutoff,isDiag = T),istart=1,jstart=1,nSNPs = ncol(snpA),makeSymmetric = T)
   
@@ -138,14 +161,23 @@ run_RSS <- function(param_snpfile,param_expfile,snp_chunk,exp_chunk,tissue,
     cat(i,"of ",length(summ_statl),"\n")
     se <- summ_statl[[i]][["se"]]
     betahat <- summ_statl[[i]][["betahat"]]
-    SiRiS <- SiRSi(sp_R,Si = 1/se)
+    if(sparseLD){
+      SiRiS <- SiRSi(R,Si = 1/se)
+    }else{
+      SiRiS <- SiRSi_d(R,Si=1/se)
+    }
     
     p <- length(betahat)
     alpha0 <- ralpha(p = p)
     mu0 <-rmu(p)
     SiRiSr <- SiRiS%*%(alpha0*mu0)
-    fit_df <- grid_search_rss_varbvsr(SiRiS = SiRiS,sigma_beta = sigb,logodds=logodds,betahat = betahat,
-                                      se = se,talpha0 = alpha0,tmu0 = mu0,tSiRiSr0 = SiRiSr@x,tolerance = 1e-3,itermax = 100,verbose = T,lnz_tol = T)
+    if(sparseLD){
+      fit_df <- grid_search_rss_varbvsr_sp(SiRiS = SiRiS,sigma_beta = sigb,logodds=logodds,betahat = betahat,
+                                        se = se,talpha0 = alpha0,tmu0 = mu0,tSiRiSr0 = SiRiSr@x,tolerance = 1e-3,itermax = 100,verbose = T,lnz_tol = T)
+    }else{
+      fit_df <- grid_search_rss_varbvsr(SiRiS = SiRiS,sigma_beta = sigb,logodds=logodds,betahat = betahat,
+                                        se = se,talpha0 = alpha0,tmu0 = mu0,tSiRiSr0 = SiRiSr@x,tolerance = 1e-3,itermax = 100,verbose = T,lnz_tol = T)
+    }
     
     fit_dfl[[i]] <- fit_df %>% mutate(fgeneid=exp_fgeneid[i])
     gc()

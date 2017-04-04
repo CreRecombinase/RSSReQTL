@@ -15,6 +15,9 @@ double calc_nmsum(const double m){
 
 
 
+
+
+
 Eigen::MatrixXd calc_dist(c_arrayxd_internal map){
   int p=map.size();
   Eigen::MatrixXd retmatrix(p,p);
@@ -28,6 +31,7 @@ Eigen::MatrixXd calc_dist(c_arrayxd_internal map){
       retmatrix.coeffRef(i,j)=tj-ti;
     }
   }
+ 
   return(retmatrix);
 }
 //[[Rcpp::export(name="calc_dist")]]
@@ -36,10 +40,40 @@ Eigen::MatrixXd calc_dist_exp( arrayxd_external map){
 }
 
 
+
+
 Eigen::MatrixXd calc_cov( c_Matrix_internal mat){
   auto centered = mat.rowwise()-mat.colwise().mean();
-  return (((centered.adjoint()*centered)/double(mat.rows()-1)).triangularView<Eigen::UnitUpper>());  
+  return (((centered.adjoint()*centered)/double(mat.rows()-1)));  
 }
+
+
+
+//[[Rcpp::export]]
+Eigen::MatrixXd test_calc_shrink(arrayxd_external map,Matrix_external Hpanel,  const double Ne, const double m,const double cutoff){
+  int p=map.size();
+  Eigen::MatrixXd S=calc_cov(Hpanel);
+  Eigen::MatrixXd retmatrix(p,p);
+  retmatrix.setZero();
+  double tj=0;
+  double ti=0;
+  for(int i=0; i<p; i++){
+    ti = map.coeff(i);
+    for(int j=i+1;j<p; j++){
+      tj=map.coeff(j);
+      double rho = exp(-(4*Ne*(tj-ti)/100)/(2*m));
+      if(rho>=cutoff){
+        retmatrix.coeffRef(i,j)=rho;
+      }
+     
+    }
+  }
+  retmatrix.diagonal().setOnes(); 
+  
+  S=S.cwiseProduct(retmatrix);
+  return(S);
+}
+
 
 // 
 // Eigen::MatrixXd calc_cov_daal( Matrix_internal mat){
@@ -182,6 +216,9 @@ Eigen::MatrixXd cov_2_cor_exp(Matrix_external covmat, arrayxd_external rowvar){
 }
 
 
+
+
+
 void compute_shrinkage(Matrix_internal distmat, c_Matrix_internal S,c_Matrix_internal hmata,const double theta, const double m,const double Ne,const double cutoff){
   // auto tdv=distmat.selfadjointView<Eigen::Upper>();
   // tdv=(tdv*(4*Ne))/100;
@@ -197,8 +234,9 @@ void compute_shrinkage(Matrix_internal distmat, c_Matrix_internal S,c_Matrix_int
       temp=0;
     }
   }
+  distmat.diagonal().setOnes();
   distmat=distmat.cwiseProduct(S);
-  Eigen::ArrayXd vars=calc_variance(hmata);
+   Eigen::ArrayXd vars=calc_variance(hmata);
   
   distmat.diagonal()=vars;
   Eigen::VectorXd diagvec(distmat.rows());
@@ -211,10 +249,13 @@ void compute_shrinkage(Matrix_internal distmat, c_Matrix_internal S,c_Matrix_int
 
 
 void compute_shrinkage_cor(Matrix_internal distmat, c_Matrix_internal S,c_Matrix_internal hmata,const double theta, const double m,const double Ne,const double cutoff){
-  // auto tdv=distmat.selfadjointView<Eigen::Upper>();
-  // tdv=(tdv*(4*Ne))/100;
+
   
-  int n=hmata.rows();
+  
+  //Editing so if we detect genotype instead of haplotype, we'll simply multiply S by 0.5
+  double dosage_max=hmata.maxCoeff();
+  bool isGeno= dosage_max>1;
+//  int n=hmata.rows();
   distmat=4*Ne*distmat/100;
   distmat =(-distmat/(2*m)).array().exp();
   int tot_size=distmat.rows()*distmat.cols();
@@ -227,6 +268,11 @@ void compute_shrinkage_cor(Matrix_internal distmat, c_Matrix_internal S,c_Matrix
   }
   distmat=distmat.cwiseProduct(S);
   Eigen::ArrayXd vars=calc_variance(hmata);
+   if(isGeno){
+     // distmat=distmat*0.5;
+     vars=vars*0.5;
+   }
+  
   
   distmat.diagonal()=vars;
   Eigen::VectorXd diagvec(distmat.rows());
@@ -234,8 +280,8 @@ void compute_shrinkage_cor(Matrix_internal distmat, c_Matrix_internal S,c_Matrix
   distmat = (1-theta)*(1-theta)*distmat;
   distmat.diagonal()=distmat.diagonal()+diagvec;
   vars=vars*(1-theta)*(1-theta)+0.5*theta*(1-0.5*theta);
+
   cov_2_cor(distmat,vars);
-  
 }
 
 
@@ -250,11 +296,17 @@ Eigen::MatrixXd calc_shrinkage(Matrix_external distmat, Matrix_external S, Matri
 
 
 Eigen::MatrixXd calcLD(c_Matrix_internal hmata,c_arrayxd_internal mapa,const double m, const double Ne, const double cutoff){
-  
+
   double nmsum=calc_nmsum(m);
   double theta=(1/nmsum)/(2*m+(1/nmsum));
   Eigen::MatrixXd dist=calc_dist(mapa);
   Eigen::MatrixXd S=calc_cov(hmata);
+  
+  double dosage_max=hmata.maxCoeff();
+  bool isGeno= dosage_max>1;
+  if(isGeno){
+    S=S*0.5;
+  }
   
   compute_shrinkage_cor(dist,S,hmata,theta,m,Ne,cutoff);
   //  Eigen::SparseMatrix<double> retmat=dist.sparseView();
