@@ -1,5 +1,6 @@
 
-# param_snpfile <- "/media/nwknoblauch/Data/GTEx/GTEx_rssr/wright_high_h2/SNP_Adipose_Subcutaneous.h5"
+ #eqtl_snpfile <- "/media/nwknoblauch/Data/GTEx/GTEx_rssr/wright_high_h2/SNP_Adipose_Subcutaneous.h5"
+# eqtl_snpfile <- "/media/nwknoblauch/Data/GTEx/GTEx_SNP_h5/Whole_Blood.h5"
 # snp_chunk <- 1
 # exp_chunk <-1
 # param_expfile <- "/media/nwknoblauch/Data/GTEx/GTEx_rssr/wright_high_h2/EXP_Adipose_Subcutaneous.h5"
@@ -12,14 +13,41 @@
 # cutoff=1e-3
 # # em_logodds=F
 
+sim_eff <- function(p,tpi,tsigb){
 
-gen_LD <- function(ld_snpfile,ld_snplist,m=85,Ne=11490.672741,cutoff=1e-3,mapA=NULL){
+  Z <- rbinom(n=p,size = 1,prob = tpi)
+  
+  beta <- numeric(p)
+  beta[Z==1] <- rnorm(sum(Z),mean=0,sd=tsigb)
+  return(beta)
+}
+
+sim_y <- function(eqtl_snpfile,eqtl_snplist,beta){
+  
+  stopifnot(file.exists(eqtl_snpfile))
+  snpA <-read_2d_index_h5(eqtl_snpfile,"SNPdata","genotype",eqtl_snplist)
+  return( c(snpA%*%beta))
+  
+}
+
+sim_ys <- function(eqtl_snpfile,eqtl_snplist,betamat){
+  
+  stopifnot(file.exists(eqtl_snpfile))
+  snpA <-read_2d_index_h5(eqtl_snpfile,"SNPdata","genotype",eqtl_snplist)
+  return( c(snpA%*%beta))
+  
+}
+
+
+
+gen_LD <- function(ld_snpfile,ld_snplist,m=85,Ne=11490.672741,cutoff=1e-3,mapA=NULL,snpA=NULL){
   #  ld_ldf<-read_attr(param_snpfile,as.character(snp_chunk),"1kg_filepath")
   stopifnot(file.exists(ld_snpfile))
   #  ld_snplist <- read_vec(param_snpfile,paste0("/",snp_chunk,"/1kg"))
   
-  
-  snpA <-read_2d_index_h5(ld_snpfile,"SNPdata","genotype",ld_snplist)
+  if(is.null(snpA)){
+    snpA <-read_2d_index_h5(ld_snpfile,"SNPdata","genotype",ld_snplist)
+  }
   if(is.null(mapA)){
     mapA <-read_vec(ld_snpfile,"/SNPinfo/map")[ld_snplist]
   }
@@ -31,13 +59,14 @@ gen_LD <- function(ld_snpfile,ld_snplist,m=85,Ne=11490.672741,cutoff=1e-3,mapA=N
 }
 
 
-gen_LD_sp <- function(ld_snpfile,ld_snplist,m=85,Ne=11490.672741,cutoff=1e-3,mapA=NULL){
+gen_LD_sp <- function(ld_snpfile,ld_snplist,m=85,Ne=11490.672741,cutoff=1e-3,mapA=NULL,snpA=NULL){
   #  ld_ldf<-read_attr(param_snpfile,as.character(snp_chunk),"1kg_filepath")
   stopifnot(file.exists(ld_snpfile))
   #  ld_snplist <- read_vec(param_snpfile,paste0("/",snp_chunk,"/1kg"))
   
-  
-  snpA <-read_2d_index_h5(ld_snpfile,"SNPdata","genotype",ld_snplist)
+  if(is.null(snpA)){
+    snpA <-read_2d_index_h5(ld_snpfile,"SNPdata","genotype",ld_snplist)
+  }
   if(is.null(mapA)){
     mapA <-read_vec(ld_snpfile,"/SNPinfo/map")[ld_snplist]
   }

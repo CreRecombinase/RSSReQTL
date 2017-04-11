@@ -28,6 +28,9 @@ Eigen::MatrixXd calc_dist(c_arrayxd_internal map){
     ti = map.coeff(i);
     for(int j=i+1;j<p; j++){
       tj=map.coeff(j);
+      if(tj<0){
+        Rcpp::stop("Negative map value encountered!");
+      }
       retmatrix.coeffRef(i,j)=tj-ti;
     }
   }
@@ -295,6 +298,17 @@ Eigen::MatrixXd calc_shrinkage(Matrix_external distmat, Matrix_external S, Matri
 }
 
 
+// Eigen::MatrixXd calc_LD_ns(c_Matrix_internal hmata){
+//   Eigen::ArrayXd vars = calc_variance(hmata);
+//   Eigen::ArrayXd means= hmata.colwise().mean();
+// 
+//   // return(((mat.rowwise()-(mat.colwise().mean())).array().square().colwise().sum())/(n-1));
+//   //
+//   // return cov_2_cor(calc_cov(hmata));
+// }
+
+
+
 Eigen::MatrixXd calcLD(c_Matrix_internal hmata,c_arrayxd_internal mapa,const double m, const double Ne, const double cutoff){
 
   double nmsum=calc_nmsum(m);
@@ -323,13 +337,10 @@ Eigen::MatrixXd calcLD_exp(Matrix_external hmata,arrayxd_external mapa,const dou
 
 Eigen::SparseMatrix<double> sp_calcLD(c_Matrix_internal hmata,c_arrayxd_internal mapa,const double m, const double Ne, const double cutoff){
   
-  double nmsum=calc_nmsum(m);
-  double theta=(1/nmsum)/(2*m+(1/nmsum));
-  Eigen::MatrixXd dist=calc_dist(mapa);
-  Eigen::MatrixXd S=calc_cov(hmata);
-  
-  compute_shrinkage_cor(dist,S,hmata,theta,m,Ne,cutoff);
-  dist.triangularView<Eigen::Lower>()=dist.transpose();
+  // compute_shrinkage_cor(dist,S,hmata,theta,m,Ne,cutoff);
+
+  Eigen::MatrixXd dist = calcLD(hmata,mapa,m,Ne,cutoff);
+  // dist.triangularView<Eigen::Lower>()=dist.transpose();
   Eigen::SparseMatrix<double> retmat=dist.sparseView();
   return(retmat);
 }

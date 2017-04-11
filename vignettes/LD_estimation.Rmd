@@ -1,0 +1,84 @@
+---
+title: "LD Estimation"
+author: "Nicholas Knoblauch"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+## GTEx LD estimation from genotype
+
+I've been asked to compute LD at the following places.  For starters, let's do Whole Blood
+
+
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(RcppEigenH5)
+
+
+kgh5 <- dir("/media/nwknoblauch/Data/GTEx/1kg_SNP_H5",full.names = T)
+akg_h5 <- bind_rows(lapply(kgh5,function(x){
+  cat(x,"\n")
+  return(data_frame(chrom=read_ivec(x,"SNPinfo","chrom"),
+             pos=read_ivec(x,"SNPinfo","pos"),
+             map=read_dvec(x,"SNPinfo","map")) %>% mutate(ikg_ind=1:n()))
+})) %>% distinct(chrom,pos,.keep_all=T)
+
+wbf <- "/media/nwknoblauch/Data/GTEx/GTEx_SNP_h5/Whole_Blood.h5"
+
+
+snpleg <- read_df_h5(wbf,"SNPinfo") %>% mutate(Whole_Blood_ind=1:n())
+
+
+ld_file <- "~/Downloads/SNPList.maxz.txt"
+ld_snps <- read.table(ld_file,sep="_",header=F,stringsAsFactors = F) 
+colnames(ld_snps) <- c("tchrom","chrom","pos","ref","alt","b37") 
+ld_snps <- select(ld_snps,-tchrom,-b37) %>% mutate(ld_ind=1:n()) %>% mutate(rowname=scan(ld_file,what=character()))
+
+
+
+head(ld_snps)
+```
+
+```{r,eval=F}
+library(dplyr)
+library(RcppEigenH5)
+
+nsnpleg <- inner_join(snpleg,ld_snps) %>% distinct(chrom,pos,.keep_all=T)
+nsnpleg <- inner_join(nsnpleg,akg_h5) %>% distinct(Whole_Blood_ind,ikg_ind,.keep_all = T)
+nsnpleg <- mutate(nsnpleg,wb_filepath="../../../../../../media/nwknoblauch/Data/GTEx/GTEx_SNP_h5/Whole_Blood.h5")
+snplm <- split(nsnpleg,nsnpleg$chrom)
+chunk_df <- snplm[[1]]
+outfile<- "/media/nwknoblauch/Data/GTEx/GTEx_rssr/gao_LD/SNP_Whole_Blood.h5"
+chunknum <- 1
+
+write_chunk <- function(chunknum,chunk_df,filename){
+  cat(chunknum,"\n")
+  # kgi <- chunk_df$kg_ind
+
+  wbi <- chunk_df$Whole_Blood_ind
+  chunk_df <- dplyr::arrange(chunk_df,pos)
+  pos <- chunk_df$pos
+  wbmap <- chunk_df$map
+  ldm <- chunk_df$ld_ind
+  write_ivec_h5(filename,groupname=as.character(chunknum),dataname="ld_map",data=ldm)
+  write_ivec_h5(filename,groupname=as.character(chunknum),dataname="pos",data=pos)
+  write_ivec_h5(filename,groupname=as.character(chunknum),dataname="Whole_Blood",data=wbi,deflate_level=4)
+  write_dvec_h5(filename,groupname=as.character(chunknum),dataname="genetic_map",data=wbmap,deflate_level=4)
+  # write_group_string_attr_h5(filename,as.character(chunknum),"1kg_filepath",chunk_df$kg_filepath[1])
+  write_group_string_attr_h5(filename,as.character(chunknum),"Whole_Blood_filepath",chunk_df$wb_filepath[1])
+  write_group_int_attr_h5(filename,as.character(chunknum),"chromosome",chunk_df$chrom[1])
+}
+for(i in 1:length(snplm)){
+  write_chunk(i,snplm[[i]],outfile)
+}
+
+
+```
+

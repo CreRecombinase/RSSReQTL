@@ -87,15 +87,42 @@ test_that("LD shrinkage estimators give similar results for genotype and haploty
   Hpanel <- haplomat
   tmap <- mapdat
   
-
+  
   Rsig_h <- calcLD(hmata = Hpanel,mapa = tmap,m = m,Ne = Ne,cutoff = cutoff)
   Rsig_h[lower.tri(Rsig_h)] <- 0
   data("genomat")
   Gpanel <- genomat
   Rsig_g <- calcLD(hmata = Gpanel,mapa = tmap,m = m,Ne = Ne,cutoff = cutoff)
   Rsig_g[lower.tri(Rsig_g)] <- 0
-
+  
   expect_equal(Rsig_h,Rsig_g)
+  
+  
+})
+
+
+
+test_that("LD shrinkage estimators give similar results for sparse and dense data",{
+  
+  m=85
+  Ne=11490.672741
+  cutoff=1e-3
+  data("genomat")
+  data("mapdat")
+  data("haplomat")
+  Hpanel <- haplomat
+  tmap <- mapdat
+  
+  
+  Rsig_h_d <- calcLD(hmata = Hpanel,mapa = tmap,m = m,Ne = Ne,cutoff = cutoff)
+  Rsig_h_s <- as.matrix(sp_calcLD(hmata = Hpanel,mapa = tmap,m = m,Ne = Ne,cutoff = cutoff))
+  expect_equivalent(Rsig_h_d,Rsig_h_s)
+  
+  data("genomat")
+  Gpanel <- genomat
+  Rsig_g_d <- calcLD(hmata = Gpanel,mapa = tmap,m = m,Ne = Ne,cutoff = cutoff)
+  Rsig_g_s <- as.matrix(sp_calcLD(hmata = Gpanel,mapa = tmap,m = m,Ne = Ne,cutoff = cutoff))
+  expect_equivalent(Rsig_g_d,Rsig_g_s)
   
   
 })
