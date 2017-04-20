@@ -13,22 +13,226 @@
 # cutoff=1e-3
 # # em_logodds=F
 
-sim_eff <- function(p,tpi,tsigb){
+glmnet_max <- function(X,ymat,glmnet_alpha,fgeneid){
+  library(glmnet)
+  library(dplyr)
+  library(progress)
+  retmat <- matrix(0,ncol(ymat),3)
+  colnames(retmat) <- c("sigb","logodds","fgeneid")
+  pb <- progress_bar$new(total=ncol(ymat))
+  for(i in 1:ncol(ymat)){
+      pb$tick()
+    tcv <- cv.glmnet(X,ymat[,i],alpha=0.95)
+    betas <- coef(tcv,s="lambda.1se")[-1,]
+    retpi <- mean(betas!=0)
+    retsigb <- sd(betas[betas!=0])
+    retmat[i,1] <- retsigb
+    retmat[i,2] <- retpi
+    retmat[i,3] <- i
+  }
+  return(as_data_frame(retmat))
+}
 
-  Z <- rbinom(n=p,size = 1,prob = tpi)
+
+rssr_max <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T,itermax=100,fgeneid=NULL){
+  library(dplyr)
+  library(progress)
+  stopifnot(ncol(R)==nrow(betahat_mat),
+            ncol(betahat_mat)==ncol(se_mat),
+            length(logodds)==length(sigb))
+  
+  if(is.null(fgeneid)){
+    fgeneid <- 1:ncol(betahat_mat)
+  }
+  
+  retl <- list()
+  p <- nrow(betahat_mat)
+  retmat <- matrix(0,ncol(betahat_mat),4)
+  colnames(retmat) <- c("lnZ","sigb","logodds","fgeneid")
+  pb <- progress_bar$new(total=ncol(betahat_mat))
+  for(i in 1:ncol(betahat_mat)){
+    pb$tick()
+    SiRiS <- SiRSi_d(R,Si=1/se_mat[,i])
+    
+    alpha0 <- ralpha(p = p)
+    mu0 <-rmu(p)
+    SiRiSr <- (SiRiS%*%(alpha0*mu0))
+    retdf <- grid_search_rss_varbvsr(SiRiS = SiRiS,
+                                     sigma_beta = sigb,
+                                     logodds = logodds,
+                                     betahat = betahat_mat[,i],
+                                     se = se_mat[,i],talpha0 = alpha0,
+                                     tmu0 = mu0,tSiRiSr0 = SiRiSr,
+                                     tolerance = tolerance,itermax=100,verbose = F,
+                                     lnz_tol = lnz_tol) %>% filter(lnZ==max(lnZ)) %>% slice(1)
+    retmat[i,1] <- retdf$lnZ
+    retmat[i,2] <- retdf$sigb
+    retmat[i,3] <- retdf$logodds
+    retmat[i,4] <- i
+  }
+  return(as_data_frame(retmat))
+  
+}
+
+
+
+rssr_mean <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T,itermax=100,fgeneid=NULL){
+  library(dplyr)
+  library(rssr)
+  library(progress)
+  stopifnot(ncol(R)==nrow(betahat_mat),
+            ncol(betahat_mat)==ncol(se_mat),
+            length(logodds)==length(sigb))
+  
+  if(is.null(fgeneid)){
+    fgeneid <- 1:ncol(betahat_mat)
+  }
+  
+  ng <- ncol(betahat_mat)
+  retl <- list()
+  p <- nrow(betahat_mat)
+  retmat <- matrix(0,ng,3)
+  colnames(retmat) <- c("mean_sigma","mean_pi","fgeneid")
+  pb <- progress_bar$new(total=ng)
+  for(i in 1:ng){
+    pb$tick()
+    SiRiS <- SiRSi_d(R,Si=1/se_mat[,i])
+    
+    alpha0 <- ralpha(p = p)
+    mu0 <-rmu(p)
+    SiRiSr <- (SiRiS%*%(alpha0*mu0))
+    retdf <- grid_search_rss_varbvsr(SiRiS = SiRiS,
+                                     sigma_beta = sigb,
+                                     logodds = logodds,
+                                     betahat = betahat_mat[,i],
+                                     se = se_mat[,i],talpha0 = alpha0,
+                                     tmu0 = mu0,tSiRiSr0 = SiRiSr,
+                                     tolerance = tolerance,itermax=100,verbose = F,
+                                     lnz_tol = lnz_tol) %>% 
+      mutate(pi=exp(logodds)/(exp(logodds)+1),w=normalizeLogWeights(lnZ,na.rm=T)) %>% 
+      summarise(mean_pi=sum(w*pi),mean_sigma=sum(w*sigb))
+    retmat[i,1] <- retdf$mean_sigma
+    retmat[i,2] <- retdf$mean_pi
+    retmat[i,3] <- i
+  }
+  return(as_data_frame(retmat))
+  
+}
+
+
+rssr_all <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T,itermax=100,fgeneid=NULL){
+  library(dplyr)
+  library(rssr)
+  library(progress)
+  library(BBmisc)
+  stopifnot(ncol(R)==nrow(betahat_mat),
+            ncol(betahat_mat)==ncol(se_mat))
+  
+  if(is.null(fgeneid)){
+    fgeneid <- 1:ncol(betahat_mat)
+  }
+  
+  num_sigb <- length(sigb)
+  num_logodds <- length(logodds)
+  ng <- ncol(betahat_mat)
+  tot_fields <- num_sigb*num_logodds*ng
+  retl <- list()
+  p <- nrow(betahat_mat)
+  
+  retmat <- matrix(0,tot_fields,4)
+  colnames(retmat) <- c("lnZ","sigma","pi","fgeneid")
+  pb <- progress_bar$new(total=ng)
+  chunkind <- chunk(1:tot_fields,chunk.size = (num_sigb*num_logodds))
+  for(i in 1:ng){
+    pb$tick()
+    SiRiS <- SiRSi_d(R,Si=1/se_mat[,i])
+    
+    alpha0 <- ralpha(p = p)
+    mu0 <-rmu(p)
+    SiRiSr <- (SiRiS%*%(alpha0*mu0))
+    retdf <- grid_search_rss_varbvsr(SiRiS = SiRiS,
+                                     sigma_beta = sigb,
+                                     logodds = logodds,
+                                     betahat = betahat_mat[,i],
+                                     se = se_mat[,i],talpha0 = alpha0,
+                                     tmu0 = mu0,tSiRiSr0 = SiRiSr,
+                                     tolerance = tolerance,itermax=100,verbose = F,
+                                     lnz_tol = lnz_tol) %>% 
+      mutate(pi=exp(logodds)/(exp(logodds)+1))
+    chunki <- chunkind[[i]]
+    retmat[chunki,1] <- retdf$lnZ
+    retmat[chunki,2] <- retdf$pi
+    retmat[chunki,3] <- retdf$sigb
+    retmat[chunki,4] <- i
+    
+  }
+  return(as_data_frame(retmat))
+  
+}
+
+
+
+sim_eff <- function(p,neff,tsigb){
+
+  stopifnot(neff<=p,neff>=1)
+  Z <- sample(1:p,neff,replace=F)
   
   beta <- numeric(p)
-  beta[Z==1] <- rnorm(sum(Z),mean=0,sd=tsigb)
+  beta[Z] <- rnorm(length(Z),mean=0,sd=tsigb)
   return(beta)
 }
 
-sim_y <- function(eqtl_snpfile,eqtl_snplist,beta){
+calc_resid <- function(X,beta,pve){
+  part_1 = (1-pve) / pve;
+  n <- nrow(X)
+  xb     = X%*%beta
   
-  stopifnot(file.exists(eqtl_snpfile))
-  snpA <-read_2d_index_h5(eqtl_snpfile,"SNPdata","genotype",eqtl_snplist)
-  return( c(snpA%*%beta))
-  
+  part_2 = c(crossprod(xb) / n)
+  return(sqrt(part_1 * part_2))
 }
+
+sim_y_pve <- function(X,beta,sigma){
+  n  <- nrow(X)
+  return(X%*%beta+rnorm(p,0,sigma))  
+}
+
+
+
+
+
+sim_betamat <- function(tparamdf,p){
+  require(progress)
+  np <- nrow(tparamdf)
+  betamat <- matrix(0,p,np)
+  pb <- progress_bar$new(total=np)
+  tparamdf <- mutate(tparamdf,neff=ceiling(tpi*p))
+  for(i in 1:ncol(betamat)){
+    pb$tick()
+    betamat[,i] <- sim_eff(p=p,neff = tparamdf$neff[i],tsigb=tparamdf$tsigb[i])
+  }
+  return(betamat)
+}
+
+sim_residmat <- function(tparamdf,SNP,betamat){
+
+  require(progress)
+  n <- nrow(SNP)
+  np <- nrow(tparamdf)
+  p <- ncol(betamat)
+  residmat <- matrix(0,n,np)
+  pb <- progress_bar$new(total=np)
+  for(i in 1:np){
+    pb$tick()
+    residmat[,i] <- rnorm(n,calc_resid(SNP,betamat[,i],tparamdf$tpve[i]))
+  }
+  return(residmat)
+}
+# 
+#   stopifnot(file.exists(eqtl_snpfile))
+#   snpA <-read_2d_index_h5(eqtl_snpfile,"SNPdata","genotype",eqtl_snplist)
+#   return( c(snpA%*%beta))
+#   
+# }
 
 sim_ys <- function(eqtl_snpfile,eqtl_snplist,betamat){
   
@@ -37,6 +241,8 @@ sim_ys <- function(eqtl_snpfile,eqtl_snplist,betamat){
   return( c(snpA%*%beta))
   
 }
+
+
 
 
 
@@ -49,7 +255,8 @@ gen_LD <- function(ld_snpfile,ld_snplist,m=85,Ne=11490.672741,cutoff=1e-3,mapA=N
     snpA <-read_2d_index_h5(ld_snpfile,"SNPdata","genotype",ld_snplist)
   }
   if(is.null(mapA)){
-    mapA <-read_vec(ld_snpfile,"/SNPinfo/map")[ld_snplist]
+    mapA <- read_1d_index_h5(ld_snpfile,"SNPinfo","map",ld_snplist)
+    # mapA <-read_vec(ld_snpfile,"/SNPinfo/map")[ld_snplist]
   }
   
   stopifnot(ncol(snpA)==length(ld_snplist),length(mapA)==length(ld_snplist))
@@ -68,12 +275,33 @@ gen_LD_sp <- function(ld_snpfile,ld_snplist,m=85,Ne=11490.672741,cutoff=1e-3,map
     snpA <-read_2d_index_h5(ld_snpfile,"SNPdata","genotype",ld_snplist)
   }
   if(is.null(mapA)){
-    mapA <-read_vec(ld_snpfile,"/SNPinfo/map")[ld_snplist]
+    mapA <- read_1d_index_h5(ld_snpfile,"SNPinfo","map",ld_snplist)
+    # mapA <-read_vec(ld_snpfile,"/SNPinfo/map")[ld_snplist]
   }
   
   stopifnot(ncol(snpA)==length(ld_snplist),length(mapA)==length(ld_snplist))
   
   sp_R <- sp_calcLD(snpA,mapA,m,Ne,cutoff)
+  return(sp_R)
+}
+
+
+gen_LD_symm <- function(ld_snpfile,ld_snplist,m=85,Ne=11490.672741,cutoff=1e-3,mapA=NULL,snpA=NULL){
+  #  ld_ldf<-read_attr(param_snpfile,as.character(snp_chunk),"1kg_filepath")
+  stopifnot(file.exists(ld_snpfile))
+  #  ld_snplist <- read_vec(param_snpfile,paste0("/",snp_chunk,"/1kg"))
+  
+  if(is.null(snpA)){
+    snpA <-read_2d_index_h5(ld_snpfile,"SNPdata","genotype",ld_snplist)
+  }
+  if(is.null(mapA)){
+
+    mapA <-read_1d_index_h5(ld_snpfile,groupname = "SNPinfo",dataname = "map",indvec = ld_snplist)
+  }
+  
+  stopifnot(ncol(snpA)==length(ld_snplist),length(mapA)==length(ld_snplist))
+  
+  sp_R <- sp_calcLD_symm(snpA,mapA,m,Ne,cutoff)
   return(sp_R)
 }
 

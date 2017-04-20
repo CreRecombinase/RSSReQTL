@@ -18,6 +18,32 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// ld2df_sp
+Rcpp::DataFrame ld2df_sp(const sparseMatrix_external ldmat, Rcpp::StringVector rsid, const double r2cutoff);
+RcppExport SEXP RSSReQTL_ld2df_sp(SEXP ldmatSEXP, SEXP rsidSEXP, SEXP r2cutoffSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const sparseMatrix_external >::type ldmat(ldmatSEXP);
+    Rcpp::traits::input_parameter< Rcpp::StringVector >::type rsid(rsidSEXP);
+    Rcpp::traits::input_parameter< const double >::type r2cutoff(r2cutoffSEXP);
+    rcpp_result_gen = Rcpp::wrap(ld2df_sp(ldmat, rsid, r2cutoff));
+    return rcpp_result_gen;
+END_RCPP
+}
+// ld2df
+Rcpp::DataFrame ld2df(const Matrix_external ldmat, Rcpp::StringVector rsid, const double r2cutoff);
+RcppExport SEXP RSSReQTL_ld2df(SEXP ldmatSEXP, SEXP rsidSEXP, SEXP r2cutoffSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Matrix_external >::type ldmat(ldmatSEXP);
+    Rcpp::traits::input_parameter< Rcpp::StringVector >::type rsid(rsidSEXP);
+    Rcpp::traits::input_parameter< const double >::type r2cutoff(r2cutoffSEXP);
+    rcpp_result_gen = Rcpp::wrap(ld2df(ldmat, rsid, r2cutoff));
+    return rcpp_result_gen;
+END_RCPP
+}
 // calc_dist_exp
 Eigen::MatrixXd calc_dist_exp(arrayxd_external map);
 RcppExport SEXP RSSReQTL_calc_dist_exp(SEXP mapSEXP) {
@@ -125,6 +151,21 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// sp_calcLD_symm_exp
+Eigen::SparseMatrix<double> sp_calcLD_symm_exp(Matrix_external hmata, arrayxd_external mapa, const double m, const double Ne, const double cutoff);
+RcppExport SEXP RSSReQTL_sp_calcLD_symm_exp(SEXP hmataSEXP, SEXP mapaSEXP, SEXP mSEXP, SEXP NeSEXP, SEXP cutoffSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Matrix_external >::type hmata(hmataSEXP);
+    Rcpp::traits::input_parameter< arrayxd_external >::type mapa(mapaSEXP);
+    Rcpp::traits::input_parameter< const double >::type m(mSEXP);
+    Rcpp::traits::input_parameter< const double >::type Ne(NeSEXP);
+    Rcpp::traits::input_parameter< const double >::type cutoff(cutoffSEXP);
+    rcpp_result_gen = Rcpp::wrap(sp_calcLD_symm_exp(hmata, mapa, m, Ne, cutoff));
+    return rcpp_result_gen;
+END_RCPP
+}
 // orthogonalize_data_exp
 Eigen::MatrixXd orthogonalize_data_exp(Matrix_external data, Matrix_external ortho_covar);
 RcppExport SEXP RSSReQTL_orthogonalize_data_exp(SEXP dataSEXP, SEXP ortho_covarSEXP) {
@@ -145,6 +186,31 @@ BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Matrix_external >::type covariates(covariatesSEXP);
     rcpp_result_gen = Rcpp::wrap(rssr_orthogonalize_covar(covariates));
+    return rcpp_result_gen;
+END_RCPP
+}
+// map_se_exp
+Eigen::MatrixXd map_se_exp(const Matrix_external genotype, const Matrix_external expression, const Matrix_external betahat);
+RcppExport SEXP RSSReQTL_map_se_exp(SEXP genotypeSEXP, SEXP expressionSEXP, SEXP betahatSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Matrix_external >::type genotype(genotypeSEXP);
+    Rcpp::traits::input_parameter< const Matrix_external >::type expression(expressionSEXP);
+    Rcpp::traits::input_parameter< const Matrix_external >::type betahat(betahatSEXP);
+    rcpp_result_gen = Rcpp::wrap(map_se_exp(genotype, expression, betahat));
+    return rcpp_result_gen;
+END_RCPP
+}
+// map_beta_exp
+Eigen::MatrixXd map_beta_exp(const Matrix_external genotype, const Matrix_external expression);
+RcppExport SEXP RSSReQTL_map_beta_exp(SEXP genotypeSEXP, SEXP expressionSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Matrix_external >::type genotype(genotypeSEXP);
+    Rcpp::traits::input_parameter< const Matrix_external >::type expression(expressionSEXP);
+    rcpp_result_gen = Rcpp::wrap(map_beta_exp(genotype, expression));
     return rcpp_result_gen;
 END_RCPP
 }

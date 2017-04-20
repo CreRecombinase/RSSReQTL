@@ -13,6 +13,7 @@ void eqtl_orthogonalize_data(Matrix_internal data, c_Matrix_internal ortho_covar
   data=data-((data.transpose()*ortho_covar)*ortho_covar.transpose()).transpose();
 }
 
+
 //[[Rcpp::export(name="orthogonalize_data")]]
 Eigen::MatrixXd orthogonalize_data_exp(Matrix_external data, Matrix_external ortho_covar){
   Eigen::MatrixXd tdata=data;
@@ -50,6 +51,44 @@ Eigen::MatrixXd map_eqtl_lm(Matrix_internal genotype, arrayxd_internal expressio
   return(retmat);
 }
 
+Eigen::MatrixXd map_beta(const Matrix_internal genotype,const Matrix_internal expression){
+  
+  Eigen::ArrayXd sx2 =genotype.array().square().colwise().sum();
+  //  Rcpp::Rcout<<"sx2 has: "<<sx2.size()<<"elements"<<std::endl;
+  return((genotype.transpose()*expression).array().colwise()/sx2);
+  
+}
+
+Eigen::MatrixXd map_se(const Matrix_internal genotype,const Matrix_internal expression, const Matrix_internal betahat){
+  size_t s=genotype.cols();
+  size_t g=expression.cols();
+  size_t n=genotype.rows();
+  Eigen::MatrixXd semat(s,g);
+  Eigen::ArrayXd sx2 =genotype.array().square().colwise().sum();
+  Eigen::MatrixXd resmat(n,s);
+  Eigen::ArrayXd resvec(s);
+  Eigen::MatrixXd yh(n,s);
+  for(int i=0;i<g;i++){
+    yh = genotype.array().rowwise()*betahat.col(i).array().transpose();
+    resmat =((yh.array().colwise()-expression.col(i).array()));
+    resvec = (resmat.array().square()/n).colwise().sum().sqrt();
+    semat.col(i)=resvec.array()*sx2.sqrt().inverse();
+  }
+  return(semat);
+}
+
+//[[Rcpp::export]]
+Eigen::MatrixXd map_se_exp(const Matrix_external genotype,const Matrix_external expression,const Matrix_external betahat){
+  return(map_se(genotype,expression,betahat));
+}
+
+
+//[[Rcpp::export]]
+Eigen::MatrixXd map_beta_exp(const Matrix_external genotype,const Matrix_external expression){
+  
+  return(map_beta(genotype,expression));
+  
+}
 
 
 //[[Rcpp::export(name="map_eqtl_lm")]]
