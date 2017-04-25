@@ -186,9 +186,12 @@ calc_resid <- function(X,beta,pve){
   part_1 = (1-pve) / pve;
   n <- nrow(X)
   xb     = X%*%beta
-  
+  stopifnot(all(!is.na(part_1)))
   part_2 = c(crossprod(xb) / n)
-  return(sqrt(part_1 * part_2))
+  stopifnot(all(!is.na(part_2)))
+  ret <- sqrt(part_1*part_2)
+  stopifnot(!is.na(ret))
+  return(ret)
 }
 
 sim_y_pve <- function(X,beta,sigma){

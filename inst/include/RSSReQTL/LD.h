@@ -1,7 +1,7 @@
 #ifndef LD_H
 #define LD_H
 #include <RcppEigen.h>
-#include "daal.h"
+
 #include "mkl.h"
 #include "RSSReQTL_types.h"
 
