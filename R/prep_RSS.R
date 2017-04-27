@@ -76,7 +76,7 @@ rssr_max <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T,
 
 
 
-rssr_mean <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T,itermax=100,fgeneid=NULL){
+rssr_mean <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T,itermax=100,fgeneid=NULL,tlogodds=NULL,tsigb=NULL){
   library(dplyr)
   library(rssr)
   library(progress)
@@ -91,9 +91,22 @@ rssr_mean <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T
   ng <- ncol(betahat_mat)
   retl <- list()
   p <- nrow(betahat_mat)
-  retmat <- matrix(0,ng,3)
-  colnames(retmat) <- c("mean_sigma","mean_pi","fgeneid")
+  retmat <- matrix(0,ng,4)
+  colnames(retmat) <- c("mean_logodds","mean_sigma","mean_pi","fgeneid")
   pb <- progress_bar$new(total=ng)
+  if(!is.null(tsigb)){
+    stopifnot(length(tsigb)==ng)
+   # sigb <- tsigb
+  }
+  if(!is.null(tlogodds)){
+    stopifnot(length(tlogodds)==ng)
+  #  logodds <- tlogodds
+  }
+  
+  
+  
+  
+  
   for(i in 1:ng){
     pb$tick()
     SiRiS <- SiRSi_d(R,Si=1/se_mat[,i])
@@ -101,6 +114,13 @@ rssr_mean <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T
     alpha0 <- ralpha(p = p)
     mu0 <-rmu(p)
     SiRiSr <- (SiRiS%*%(alpha0*mu0))
+    
+    if(!is.null(tlogodds)){
+      logodds <- tlogodds[i]
+    }
+    if(!is.null(tsigb)){
+      sigb <- tsigb[i]
+    }
     retdf <- grid_search_rss_varbvsr(SiRiS = SiRiS,
                                      sigma_beta = sigb,
                                      logodds = logodds,
@@ -110,10 +130,11 @@ rssr_mean <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T
                                      tolerance = tolerance,itermax=100,verbose = F,
                                      lnz_tol = lnz_tol) %>% 
       mutate(pi=exp(logodds)/(exp(logodds)+1),w=normalizeLogWeights(lnZ,na.rm=T)) %>% 
-      summarise(mean_pi=sum(w*pi),mean_sigma=sum(w*sigb))
-    retmat[i,1] <- retdf$mean_sigma
-    retmat[i,2] <- retdf$mean_pi
-    retmat[i,3] <- i
+      summarise(mean_pi=sum(w*pi),mean_sigma=sum(w*sigb),mean_logodds=sum(w*logodds))
+    retmat[i,1] <- retdf$mean_logodds
+    retmat[i,2] <- retdf$mean_sigma
+    retmat[i,3] <- retdf$mean_pi
+    retmat[i,4] <- i
   }
   return(as_data_frame(retmat))
   
@@ -216,17 +237,26 @@ sim_betamat <- function(tparamdf,p){
   return(betamat)
 }
 
-sim_residmat <- function(tparamdf,SNP,betamat){
 
+calc_residvec <- function(tparamdf,SNP,betamat){
   require(progress)
   n <- nrow(SNP)
   np <- nrow(tparamdf)
   p <- ncol(betamat)
-  residmat <- matrix(0,n,np)
+  residvec <- numeric(np)
   pb <- progress_bar$new(total=np)
   for(i in 1:np){
     pb$tick()
-    residmat[,i] <- rnorm(n,calc_resid(SNP,betamat[,i],tparamdf$tpve[i]))
+    residvec[i] <- calc_resid(SNP,betamat[,i],tparamdf$tpve[i])
+  }
+  return(residvec)
+}
+
+sim_residmat <- function(n,np,residvec){
+  residmat <- matrix(0,n,np)
+  pb <- progress_bar$new(total=np)
+  for(i in 1:np){
+    residmat[,i] <- rnorm(n,mean = 0,sd = residvec[i])
   }
   return(residmat)
 }
