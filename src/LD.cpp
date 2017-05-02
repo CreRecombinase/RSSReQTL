@@ -6,6 +6,42 @@
 
 
 //[[Rcpp::export]]
+double calc_spve_naive(const Matrix_external R,const arrayxd_external beta, const arrayxd_external beta_hat, const arrayxd_external  se_hat, const int n){
+  double ret_sum=0;
+  size_t p=R.cols();
+  Eigen::ArrayXd n_B=(n*se_hat.square()+beta_hat.square());
+  for(int i=0; i<p; i++){
+    for(int j=0; j<p;j++){
+      ret_sum+=(R.coeff(i,j)*beta.coeff(i)*beta.coeff(j))/std::sqrt(n_B.coeff(i)*n_B.coeff(j));
+    }
+  }
+  return ret_sum;
+}
+
+
+
+
+
+//[[Rcpp::export]]
+Eigen::ArrayXd calc_spve(const Eigen::MatrixXd &R,const Eigen::MatrixXd &beta_mat, const Eigen::MatrixXd &beta_hat_mat, const Eigen::MatrixXd  &se_hat_mat, const int n){
+  double ret_sum=0;
+  size_t p=R.cols();
+  Eigen::MatrixXd n_B=beta_mat.array()/((n*se_hat_mat.array().square()+beta_hat_mat.array().square())).sqrt();
+  Eigen::MatrixXd temp_mult=n_B.transpose()*R;
+  return((n_B.transpose().array()*temp_mult.array()).rowwise().sum().array());
+
+}
+
+
+//[[Rcpp::export]]
+Eigen::ArrayXd sub_calc_spve(const Eigen::MatrixXd &R, const Eigen::MatrixXd tbeta,const int n){
+  Eigen::MatrixXd temp_mult=tbeta.transpose()*R;
+  return((tbeta.transpose().array()*temp_mult.array()).rowwise().sum().array());
+}
+
+
+
+//[[Rcpp::export]]
 double calc_nmsum(const double m){
   int msize=(2*(int)m-1);
   Eigen::ArrayXd tx(msize);
@@ -13,51 +49,51 @@ double calc_nmsum(const double m){
   return  (1/tx).sum();
 }
 
-//[[Rcpp::export]]
-Rcpp::DataFrame ld2df_sp(const  sparseMatrix_external ldmat, Rcpp::StringVector rsid,const double r2cutoff=0.01){
-  
-  using namespace Eigen;
-  
-  using namespace Rcpp;
-  size_t p=ldmat.rows();
-  
-  if(p!=ldmat.cols()){
-    Rcpp::stop("ldmat is not square!");
-  }
-  if(p!=rsid.size()){
-    Rcpp::stop("rsid must be of length p!");
-  }
-  size_t dfsize = ldmat.nonZeros()-p;
-  
-  
-  
-  std::vector<double>corv;
-  corv.reserve(dfsize);
-  std::vector<std::string> rowsnp;
-  std::vector<std::string> colsnp;
-  rowsnp.reserve(dfsize);
-  colsnp.reserve(dfsize);
-  size_t ssize = rsid[0].size();
-  // Rcpp::Rcout<<"Generating DataFrame"<<std::endl;
-  for(int k=0;k<ldmat.outerSize();++k){
-    for(SparseMatrix<double>::InnerIterator it(ldmat,k);it;++it)
-    {
-      if(it.row()!=it.col()){
-        double r2=it.value()*it.value();
-        if(r2>r2cutoff){
-          corv.push_back(r2);
-          rowsnp.push_back(as<std::string>(rsid[it.row()]));
-          colsnp.push_back(as<std::string>(rsid[it.col()]));
-          
-        }
-        
-      }
-    }
-  }
-  // Rcpp::Rcout<<"Returning DataFrame"<<std::endl;
-  
-  return(DataFrame::create(_["rowsnp"]=wrap(rowsnp),_["colsnp"]=wrap(colsnp),_["r2"]=wrap(corv),_["stringsAsFactors"]=false));
-}
+// 
+// Rcpp::DataFrame ld2df_sp(const  sparseMatrix_external ldmat, Rcpp::StringVector rsid,const double r2cutoff=0.01){
+//   
+//   using namespace Eigen;
+//   
+//   using namespace Rcpp;
+//   size_t p=ldmat.rows();
+//   
+//   if(p!=ldmat.cols()){
+//     Rcpp::stop("ldmat is not square!");
+//   }
+//   if(p!=rsid.size()){
+//     Rcpp::stop("rsid must be of length p!");
+//   }
+//   size_t dfsize = ldmat.nonZeros()-p;
+//   
+//   
+//   
+//   std::vector<double>corv;
+//   corv.reserve(dfsize);
+//   std::vector<std::string> rowsnp;
+//   std::vector<std::string> colsnp;
+//   rowsnp.reserve(dfsize);
+//   colsnp.reserve(dfsize);
+//   size_t ssize = rsid[0].size();
+//   // Rcpp::Rcout<<"Generating DataFrame"<<std::endl;
+//   for(int k=0;k<ldmat.outerSize();++k){
+//     for(SparseMatrix<double>::InnerIterator it(ldmat,k);it;++it)
+//     {
+//       if(it.row()!=it.col()){
+//         double r2=it.value()*it.value();
+//         if(r2>r2cutoff){
+//           corv.push_back(r2);
+//           rowsnp.push_back(as<std::string>(rsid[it.row()]));
+//           colsnp.push_back(as<std::string>(rsid[it.col()]));
+//           
+//         }
+//         
+//       }
+//     }
+//   }
+//   // Rcpp::Rcout<<"Returning DataFrame"<<std::endl;
+//   
+//   return(DataFrame::create(_["rowsnp"]=wrap(rowsnp),_["colsnp"]=wrap(colsnp),_["r2"]=wrap(corv),_["stringsAsFactors"]=false));
+// }
 
 //[[Rcpp::export]]
 Rcpp::DataFrame ld2df(const Matrix_external ldmat, Rcpp::StringVector rsid,const double r2cutoff=0.01){

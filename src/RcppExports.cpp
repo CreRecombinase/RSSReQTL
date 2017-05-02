@@ -7,6 +7,49 @@
 
 using namespace Rcpp;
 
+// calc_spve_naive
+double calc_spve_naive(const Matrix_external R, const arrayxd_external beta, const arrayxd_external beta_hat, const arrayxd_external se_hat, const int n);
+RcppExport SEXP RSSReQTL_calc_spve_naive(SEXP RSEXP, SEXP betaSEXP, SEXP beta_hatSEXP, SEXP se_hatSEXP, SEXP nSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Matrix_external >::type R(RSEXP);
+    Rcpp::traits::input_parameter< const arrayxd_external >::type beta(betaSEXP);
+    Rcpp::traits::input_parameter< const arrayxd_external >::type beta_hat(beta_hatSEXP);
+    Rcpp::traits::input_parameter< const arrayxd_external >::type se_hat(se_hatSEXP);
+    Rcpp::traits::input_parameter< const int >::type n(nSEXP);
+    rcpp_result_gen = Rcpp::wrap(calc_spve_naive(R, beta, beta_hat, se_hat, n));
+    return rcpp_result_gen;
+END_RCPP
+}
+// calc_spve
+Eigen::ArrayXd calc_spve(const Eigen::MatrixXd& R, const Eigen::MatrixXd& beta_mat, const Eigen::MatrixXd& beta_hat_mat, const Eigen::MatrixXd& se_hat_mat, const int n);
+RcppExport SEXP RSSReQTL_calc_spve(SEXP RSEXP, SEXP beta_matSEXP, SEXP beta_hat_matSEXP, SEXP se_hat_matSEXP, SEXP nSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type R(RSEXP);
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type beta_mat(beta_matSEXP);
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type beta_hat_mat(beta_hat_matSEXP);
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type se_hat_mat(se_hat_matSEXP);
+    Rcpp::traits::input_parameter< const int >::type n(nSEXP);
+    rcpp_result_gen = Rcpp::wrap(calc_spve(R, beta_mat, beta_hat_mat, se_hat_mat, n));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sub_calc_spve
+Eigen::ArrayXd sub_calc_spve(const Eigen::MatrixXd& R, const Eigen::MatrixXd tbeta, const int n);
+RcppExport SEXP RSSReQTL_sub_calc_spve(SEXP RSEXP, SEXP tbetaSEXP, SEXP nSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type R(RSEXP);
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd >::type tbeta(tbetaSEXP);
+    Rcpp::traits::input_parameter< const int >::type n(nSEXP);
+    rcpp_result_gen = Rcpp::wrap(sub_calc_spve(R, tbeta, n));
+    return rcpp_result_gen;
+END_RCPP
+}
 // calc_nmsum
 double calc_nmsum(const double m);
 RcppExport SEXP RSSReQTL_calc_nmsum(SEXP mSEXP) {
@@ -15,19 +58,6 @@ BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const double >::type m(mSEXP);
     rcpp_result_gen = Rcpp::wrap(calc_nmsum(m));
-    return rcpp_result_gen;
-END_RCPP
-}
-// ld2df_sp
-Rcpp::DataFrame ld2df_sp(const sparseMatrix_external ldmat, Rcpp::StringVector rsid, const double r2cutoff);
-RcppExport SEXP RSSReQTL_ld2df_sp(SEXP ldmatSEXP, SEXP rsidSEXP, SEXP r2cutoffSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const sparseMatrix_external >::type ldmat(ldmatSEXP);
-    Rcpp::traits::input_parameter< Rcpp::StringVector >::type rsid(rsidSEXP);
-    Rcpp::traits::input_parameter< const double >::type r2cutoff(r2cutoffSEXP);
-    rcpp_result_gen = Rcpp::wrap(ld2df_sp(ldmat, rsid, r2cutoff));
     return rcpp_result_gen;
 END_RCPP
 }

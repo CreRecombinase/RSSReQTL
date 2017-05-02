@@ -1,17 +1,106 @@
 
- #eqtl_snpfile <- "/media/nwknoblauch/Data/GTEx/GTEx_rssr/wright_high_h2/SNP_Adipose_Subcutaneous.h5"
-# eqtl_snpfile <- "/media/nwknoblauch/Data/GTEx/GTEx_SNP_h5/Whole_Blood.h5"
-# snp_chunk <- 1
-# exp_chunk <-1
-# param_expfile <- "/media/nwknoblauch/Data/GTEx/GTEx_rssr/wright_high_h2/EXP_Adipose_Subcutaneous.h5"
-# exp_chunksize <- 1
-# 
-# tissue <- "Adipose_Subcutaneous"
-# scale_ortho_exp=T
-# m=85
-# Ne=11490.672741
-# cutoff=1e-3
-# # em_logodds=F
+
+varbvs_mean <- function(X,ymat,sigb,log10odds,tolerance=1e-3,itermax=100,fgeneid=NULL,tlog10odds=NULL,tsigb=NULL,tresid=NULL,verbose=F){
+  library(dplyr)
+  library(progress)
+  library(varbvs)
+  
+  if(is.null(fgeneid)){
+    fgeneid <- 1:ncol(ymat)
+  }
+  
+  ng <- ncol(ymat)
+  retl <- list()
+  p <- ncol(X)
+  n <- nrow(X)
+
+  pb <- progress_bar$new(total=ng)
+  if(!is.null(tsigb)){
+    stopifnot(length(tsigb)==ng)
+
+  }
+  if(!is.null(tlog10odds)){
+    stopifnot(length(tlog10odds)==ng)
+
+  }
+  if(!is.null(tresid)){
+    stopifnot(length(tresid)==ng)
+  }
+  
+  mean_logodds <- numeric(ng)
+  mean_sigb <- numeric(ng)
+  mean_alpha <- numeric(ng)
+  mean_pi <- numeric(ng)
+
+  
+  
+  for(i in 1:ng){
+    pb$tick()
+   
+    
+    if(!is.null(tlog10odds)){
+      glog10odds <- tlog10odds[i]
+    }else{
+      glog10odds <- log10odds
+    }
+    if(!is.null(tsigb)){
+      gsigb <- tsigb[i]
+    }else{
+      gsigb <- sigb^2
+    }
+    if(!is.null(tresid)){
+      gsigma <- tresid[i]^2
+      gsigb <- gsigb/gsigma
+    }else{
+      gsigma <- NULL
+    }
+    if(!is.null(gsigma)){
+      tvb <- varbvs(X,Z = NULL,y = ymat[,i],sigma = gsigma,
+                    sa = gsigb,
+                    logodds = glog10odds,
+                    update.sa = F,
+                    update.sigma = F,
+                    maxiter = itermax,tol=tolerance,verbose=verbose)
+      
+    }else{
+      tvb <- varbvs(X,Z = NULL,y = ymat[,i],
+                    sa = gsigb,
+                    logodds = glog10odds,
+                    update.sa = F,
+                    update.sigma = F,
+                    maxiter = itermax,tol=tolerance,verbose=verbose)
+    }
+
+    # tvb<- varbvs::varbvs(X = X,Z = NULL,y = ymat[,i],sa = sigb,logodds = log10odds,update.sigma = F,verbose=F,tol = 1e-3)
+    tvb_w <- normalizelogweights(tvb$logw)
+    tvb_mean_pi <- sum(tvb_w*10^(tvb$logodds)/(1+10^(tvb$logodds)))
+    tvb_mean_alpha <- mean(c(tvb$alpha%*%tvb_w))
+    tvb_mean_log10odds <- sum(tvb_w*tvb$logodds)
+    tvb_mean_logodds <- sum(tvb_w*log(10)*tvb$logodds)
+    tvb_mean_sigb <- sum(tvb_w*sqrt(tvb$sa*tvb$sigma))
+    mean_logodds[i] <- tvb_mean_logodds
+    mean_sigb[i] <- tvb_mean_sigb
+    mean_alpha[i] <- tvb_mean_alpha
+    mean_pi <- tvb_mean_pi
+    # retmat[i,1] <- tvb_mean_logodds
+    # retmat[i,2] <- tvb_mean_sigb
+    # retmat[i,3] <- tvb_mean_alpha
+    # retmat[i,4] <- tvb_mean_pi
+    # retmat[i,5] <- as.integer(fgeneid[i])
+  }
+  return(data_frame(fgeneid=fgeneid,
+                    mean_logodds=mean_logodds,
+                    mean_sigb=mean_sigb,
+                    mean_alpha=mean_alpha,
+                    mean_pi=mean_pi))
+  
+}
+
+
+
+
+
+
 
 glmnet_max <- function(X,ymat,glmnet_alpha,fgeneid){
   library(glmnet)
@@ -91,21 +180,17 @@ rssr_mean <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T
   ng <- ncol(betahat_mat)
   retl <- list()
   p <- nrow(betahat_mat)
-  retmat <- matrix(0,ng,4)
-  colnames(retmat) <- c("mean_logodds","mean_sigma","mean_pi","fgeneid")
+  retmat <- matrix(0,ng,5)
+  colnames(retmat) <- c("mean_logodds","mean_sigma","mean_alpha","mean_pi", "fgeneid")
   pb <- progress_bar$new(total=ng)
   if(!is.null(tsigb)){
     stopifnot(length(tsigb)==ng)
-   # sigb <- tsigb
+    # sigb <- tsigb
   }
   if(!is.null(tlogodds)){
     stopifnot(length(tlogodds)==ng)
-  #  logodds <- tlogodds
+    #  logodds <- tlogodds
   }
-  
-  
-  
-  
   
   for(i in 1:ng){
     pb$tick()
@@ -130,15 +215,96 @@ rssr_mean <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T
                                      tolerance = tolerance,itermax=100,verbose = F,
                                      lnz_tol = lnz_tol) %>% 
       mutate(pi=exp(logodds)/(exp(logodds)+1),w=normalizeLogWeights(lnZ,na.rm=T)) %>% 
-      summarise(mean_pi=sum(w*pi),mean_sigma=sum(w*sigb),mean_logodds=sum(w*logodds))
+      summarise(mean_pi=sum(w*pi),mean_sigma=sum(w*sigb),mean_logodds=sum(w*logodds),mean_alpha=sum(w*(alpha_mean)))
     retmat[i,1] <- retdf$mean_logodds
     retmat[i,2] <- retdf$mean_sigma
-    retmat[i,3] <- retdf$mean_pi
-    retmat[i,4] <- i
+    retmat[i,3] <- retdf$mean_alpha
+    retmat[i,4] <- retdf$mean_pi
+    retmat[i,5] <- i
   }
   return(as_data_frame(retmat))
-  
 }
+
+# 
+# rssr_sim_pve <- function(R,betahat,se,lnZ,alphamat,mumat,nsamples=100){
+#   w <- normalizelogweights(lnZ)
+#   grid_size <- length(w)
+#   j <- sample(nsamples,)
+#       
+#   
+#   
+# }
+
+rssr_pve <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T,itermax=100,fgeneid=NULL,tlogodds=NULL,tsigb=NULL){
+  library(dplyr)
+  library(rssr)
+  library(progress)
+  stopifnot(ncol(R)==nrow(betahat_mat),
+            ncol(betahat_mat)==ncol(se_mat),
+            length(logodds)==length(sigb))
+  
+  if(is.null(fgeneid)){
+    fgeneid <- 1:ncol(betahat_mat)
+  }
+  
+  ng <- ncol(betahat_mat)
+  retl <- list()
+  p <- nrow(betahat_mat)
+  retmat <- matrix(0,ng,5)
+  colnames(retmat) <- c("mean_logodds","mean_sigma","mean_alpha","mean_pi", "fgeneid")
+  pb <- progress_bar$new(total=ng)
+  if(!is.null(tsigb)){
+    stopifnot(length(tsigb)==ng)
+    # sigb <- tsigb
+  }
+  if(!is.null(tlogodds)){
+    stopifnot(length(tlogodds)==ng)
+    #  logodds <- tlogodds
+  }
+  
+  for(i in 1:ng){
+    pb$tick()
+    SiRiS <- SiRSi_d(R,Si=1/se_mat[,i])
+    
+    alpha0 <- ralpha(p = p)
+    mu0 <-rmu(p)
+    SiRiSr <- (SiRiS%*%(alpha0*mu0))
+    
+    if(!is.null(tlogodds)){
+      logodds <- tlogodds[i]
+    }
+    if(!is.null(tsigb)){
+      sigb <- tsigb[i]
+    }
+    retdf <- grid_search_rss_varbvsr(SiRiS = SiRiS,
+                                     sigma_beta = sigb,
+                                     logodds = logodds,
+                                     betahat = betahat_mat[,i],
+                                     se = se_mat[,i],talpha0 = alpha0,
+                                     tmu0 = mu0,tSiRiSr0 = SiRiSr,
+                                     tolerance = tolerance,itermax=100,verbose = F,
+                                     lnz_tol = lnz_tol) %>% 
+      mutate(pi=exp(logodds)/(exp(logodds)+1),w=normalizeLogWeights(lnZ,na.rm=T)) %>% 
+      summarise(mean_pi=sum(w*pi),mean_sigma=sum(w*sigb),mean_logodds=sum(w*logodds),mean_alpha=sum(w*(alpha_mean)))
+    retmat[i,1] <- retdf$mean_logodds
+    retmat[i,2] <- retdf$mean_sigma
+    retmat[i,3] <- retdf$mean_alpha
+    retmat[i,4] <- retdf$mean_pi
+    retmat[i,5] <- i
+    
+  }
+  retdf <- as_data_frame(retmat)
+  
+  
+  
+  return(retdf)
+}
+
+
+
+
+
+
 
 
 rssr_all <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T,itermax=100,fgeneid=NULL){
@@ -160,8 +326,16 @@ rssr_all <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T,
   retl <- list()
   p <- nrow(betahat_mat)
   
-  retmat <- matrix(0,tot_fields,4)
-  colnames(retmat) <- c("lnZ","sigma","pi","fgeneid")
+  # retmat <- matrix(0,tot_fields,4)
+  # colnames(retmat) <- c("lnZ","sigma","pi","fgeneid")
+  
+  lnZvec <- numeric(tot_fields)
+  pivec <- numeric(tot_fields)
+  alpha_meanvec <- numeric(tot_fields)
+  sigbvec <- numeric(tot_fields)
+  
+  fgeneidvec <- integer(tot_fields)
+  
   pb <- progress_bar$new(total=ng)
   chunkind <- chunk(1:tot_fields,chunk.size = (num_sigb*num_logodds))
   for(i in 1:ng){
@@ -181,15 +355,17 @@ rssr_all <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T,
                                      lnz_tol = lnz_tol) %>% 
       mutate(pi=exp(logodds)/(exp(logodds)+1))
     chunki <- chunkind[[i]]
-    retmat[chunki,1] <- retdf$lnZ
-    retmat[chunki,2] <- retdf$pi
-    retmat[chunki,3] <- retdf$sigb
-    retmat[chunki,4] <- i
+    lnZvec[chunki] <- retdf$lnZ
+    pivec[chunki] <- retdf$pi
+    alpha_meanvec[chunki] <- retdf$alpha_mean
+    sigbvec[chunki] <- retdf$sigb
+    fgeneidvec[chunki] <- fgeneid[i]
     
   }
-  return(as_data_frame(retmat))
-  
+  return(data_frame(lnZ=lnZvec,pi=pivec,alpha_mean=alpha_meanvec,sigb=sigbvec,fgeneid=fgeneidvec))
 }
+
+
 
 
 
@@ -252,7 +428,9 @@ calc_residvec <- function(tparamdf,SNP,betamat){
   return(residvec)
 }
 
-sim_residmat <- function(n,np,residvec){
+sim_residmat <- function(n,residvec){
+  require(progress)
+  np <- length(residvec)
   residmat <- matrix(0,n,np)
   pb <- progress_bar$new(total=np)
   for(i in 1:np){
