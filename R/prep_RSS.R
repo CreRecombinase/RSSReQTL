@@ -307,11 +307,15 @@ rssr_pve <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T,
 
 
 
-rssr_all <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T,itermax=100,fgeneid=NULL){
+rssr_all <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T,itermax=200,fgeneid=NULL,n=1){
+  
+  
   library(dplyr)
   library(rssr)
   library(progress)
   library(BBmisc)
+  
+  
   stopifnot(ncol(R)==nrow(betahat_mat),
             ncol(betahat_mat)==ncol(se_mat))
   
@@ -331,6 +335,7 @@ rssr_all <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T,
   
   lnZvec <- numeric(tot_fields)
   pivec <- numeric(tot_fields)
+  pvevec <- numeric(tot_fields)
   alpha_meanvec <- numeric(tot_fields)
   sigbvec <- numeric(tot_fields)
   
@@ -360,9 +365,10 @@ rssr_all <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T,
     alpha_meanvec[chunki] <- retdf$alpha_mean
     sigbvec[chunki] <- retdf$sigb
     fgeneidvec[chunki] <- fgeneid[i]
+    pvevec[chunki] <- retdf$pve/n
     
   }
-  return(data_frame(lnZ=lnZvec,pi=pivec,alpha_mean=alpha_meanvec,sigb=sigbvec,fgeneid=fgeneidvec))
+  return(data_frame(lnZ=lnZvec,pi=pivec,alpha_mean=alpha_meanvec,sigb=sigbvec,fgeneid=fgeneidvec,pve=pvevec))
 }
 
 
