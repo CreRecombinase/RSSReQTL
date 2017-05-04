@@ -126,6 +126,10 @@ glmnet_max <- function(X,ymat,glmnet_alpha,fgeneid){
 rssr_max <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T,itermax=100,fgeneid=NULL){
   library(dplyr)
   library(progress)
+  library(purrr)
+  paramdf <- list(sigb=sigb,logodds=logodds) %>% cross_d()
+  sigb <- paramdf$sigb
+  logodds <- paramdf$logodds
   stopifnot(ncol(R)==nrow(betahat_mat),
             ncol(betahat_mat)==ncol(se_mat),
             length(logodds)==length(sigb))
@@ -169,6 +173,13 @@ rssr_mean <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T
   library(dplyr)
   library(rssr)
   library(progress)
+  library(purrr)
+  
+  paramdf <- list(sigb=sigb,logodds=logodds) %>% cross_d()
+  sigb <- paramdf$sigb
+  logodds <- paramdf$logodds
+  
+  
   stopifnot(ncol(R)==nrow(betahat_mat),
             ncol(betahat_mat)==ncol(se_mat),
             length(logodds)==length(sigb))
@@ -176,6 +187,11 @@ rssr_mean <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T
   if(is.null(fgeneid)){
     fgeneid <- 1:ncol(betahat_mat)
   }
+  
+  
+  
+  
+  
   
   ng <- ncol(betahat_mat)
   retl <- list()
@@ -225,20 +241,13 @@ rssr_mean <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T
   return(as_data_frame(retmat))
 }
 
-# 
-# rssr_sim_pve <- function(R,betahat,se,lnZ,alphamat,mumat,nsamples=100){
-#   w <- normalizelogweights(lnZ)
-#   grid_size <- length(w)
-#   j <- sample(nsamples,)
-#       
-#   
-#   
-# }
 
 rssr_pve <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T,itermax=100,fgeneid=NULL,tlogodds=NULL,tsigb=NULL){
   library(dplyr)
   library(rssr)
   library(progress)
+  
+  
   stopifnot(ncol(R)==nrow(betahat_mat),
             ncol(betahat_mat)==ncol(se_mat),
             length(logodds)==length(sigb))
@@ -276,6 +285,8 @@ rssr_pve <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T,
     if(!is.null(tsigb)){
       sigb <- tsigb[i]
     }
+    
+    
     retdf <- grid_search_rss_varbvsr(SiRiS = SiRiS,
                                      sigma_beta = sigb,
                                      logodds = logodds,
@@ -314,14 +325,21 @@ rssr_all <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T,
   library(rssr)
   library(progress)
   library(BBmisc)
+  library(purrr)
+
   
+  paramdf <- list(sigb=sigb,logodds=logodds) %>% cross_d()
+  sigb <- paramdf$sigb
+  logodds <- paramdf$logodds  
   
   stopifnot(ncol(R)==nrow(betahat_mat),
-            ncol(betahat_mat)==ncol(se_mat))
+            ncol(betahat_mat)==ncol(se_mat),
+            length(sigb)==length(logodds))
   
   if(is.null(fgeneid)){
     fgeneid <- 1:ncol(betahat_mat)
   }
+
   
   num_sigb <- length(sigb)
   num_logodds <- length(logodds)
