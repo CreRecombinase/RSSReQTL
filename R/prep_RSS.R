@@ -317,12 +317,30 @@ rssr_pve <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T,
 
 
 
+tspve_all <- function(R,betahat_mat,se_mat,betamat,n,fgeneid=NULL){
+  require(dplyr)
+  ng <- ncol(betahat_mat)
+  stopifnot(ng==ncol(betamat))
+  if(is.null(fgeneid)){
+    fgeneid=1:ng()
+  }
+  stopifnot(length(fgeneid)==ng)
+  pvevec <- numeric(ng)
+  for(j in 1:ng){
+    bh <- betahat_mat[,j]
+    seh <- se_mat[,j]
+    b <- betamat[,j]
+    siris <- SiRSi_d(R,Si = 1/seh)  
+    spve <- t(b)%*%siris%*%b
+    pvevec[j] <- c(spve)/n
+  }
+  return(data_frame(fgeneid=fgeneid,tspve=pvevec))
+}
 
 
 
 
-rssr_all <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T,itermax=200,fgeneid=NULL,n=1){
-  
+rssr_all <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T,itermax=200,fgeneid=NULL,n=1,use_squarem=T){
   
   library(dplyr)
   library(rssr)
@@ -330,7 +348,6 @@ rssr_all <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T,
   library(BBmisc)
   library(purrr)
 
-  
   paramdf <- list(sigb=sigb,logodds=logodds) %>% cross_d() %>% distinct()
   sigb <- paramdf$sigb
   logodds <- paramdf$logodds  
@@ -347,63 +364,46 @@ rssr_all <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T,
   num_sigb <- length(sigb)
   num_logodds <- length(logodds)
   ng <- ncol(betahat_mat)
-  tot_fields <- num_sigb*num_logodds*ng
+
   retl <- list()
   p <- nrow(betahat_mat)
   
-  # retmat <- matrix(0,tot_fields,4)
-  # colnames(retmat) <- c("lnZ","sigma","pi","fgeneid")
-  
-  lnZvec <- numeric(tot_fields)
-  pivec <- numeric(tot_fields)
-  pvevec <- numeric(tot_fields)
-  alpha_meanvec <- numeric(tot_fields)
-  sigbvec <- numeric(tot_fields)
-  
-  fgeneidvec <- integer(tot_fields)
-  
   
   pb <- progress_bar$new(total=ng)
-  chunkind <- chunk(1:tot_fields,chunk.size = (num_sigb*num_logodds))
   retdfl <- list()
   nind=n
   for(i in 1:ng){
-    pb$tick()
+
     SiRiS <- SiRSi_d(R,Si=1/se_mat[,i])
     
     alpha0 <- ralpha(p = p)
     mu0 <-rmu(p)
     SiRiSr <- (SiRiS%*%(alpha0*mu0))
     mfgeneid <- fgeneid[i]
-    # if(!do_array){
-      retdfl[[i]] <- grid_search_rss_varbvsr(SiRiS = SiRiS,
-                                       sigma_beta = sigb,
-                                       logodds = logodds,
-                                       betahat = betahat_mat[,i],
-                                       se = se_mat[,i],talpha0 = alpha0,
-                                       tmu0 = mu0,tSiRiSr0 = SiRiSr,
-                                       tolerance = tolerance,itermax=100,verbose = F,
-                                       lnz_tol = lnz_tol) %>% 
-        mutate(pi=exp(logodds)/(exp(logodds)+1),pve=pve/nind,fgeneid=mfgeneid)
-    # }else{
-    #   retdfl[[i]] <- grid_search_rss_varbvsr_array(SiRiS = SiRiS,
-    #                                    sigma_beta = sigb,
-    #                                    logodds = logodds,
-    #                                    betahat = betahat_mat[,i],
-    #                                    se = se_mat[,i],talpha0 = alpha0,
-    #                                    tmu0 = mu0,tSiRiSr0 = SiRiSr,
-    #                                    tolerance = tolerance,itermax=100,verbose = F,
-    #                                    lnz_tol = lnz_tol) %>% 
-    #     mutate(pi=exp(logodds)/(exp(logodds)+1),pve=pve/nind,mfgeneid=fgeneid)
-    # }
-    # chunki <- chunkind[[i]]
-    # lnZvec[chunki] <- retdf$lnZ
-    # pivec[chunki] <- retdf$pi
-    # alpha_meanvec[chunki] <- retdf$alpha_mean
-    # sigbvec[chunki] <- retdf$sigb
-    # fgeneidvec[chunki] <- fgeneid[i]
-    # pvevec[chunki] <- retdf$pve/n
-    
+     if(use_squarem){
+       retdfl[[i]] <- grid_search_rss_varbvsr(SiRiS = SiRiS,
+                                              sigma_beta = sigb,
+                                              logodds = logodds,
+                                              betahat = betahat_mat[,i],
+                                              se = se_mat[,i],talpha0 = alpha0,
+                                              tmu0 = mu0,tSiRiSr0 = SiRiSr,
+                                              tolerance = tolerance,itermax=itermax,verbose = F,
+                                              lnz_tol = lnz_tol) %>% 
+         mutate(pi=exp(logodds)/(exp(logodds)+1),pve=pve/nind,fgeneid=mfgeneid)
+     }else{
+       retdfl[[i]] <- grid_search_rss_varbvsr_naive(SiRiS = SiRiS,
+                                              sigma_beta = sigb,
+                                              logodds = logodds,
+                                              betahat = betahat_mat[,i],
+                                              se = se_mat[,i],talpha0 = alpha0,
+                                              tmu0 = mu0,tSiRiSr0 = SiRiSr,
+                                              tolerance = tolerance,itermax=itermax,verbose = F,
+                                              lnz_tol = lnz_tol) %>% 
+         mutate(pi=exp(logodds)/(exp(logodds)+1),pve=pve/nind,fgeneid=mfgeneid)
+       
+       
+     }
+    pb$tick()
   }
   return(bind_rows(retdfl))
 #    data_frame(lnZ=lnZvec,pi=pivec,alpha_mean=alpha_meanvec,sigb=sigbvec,fgeneid=fgeneidvec,pve=pvevec))
