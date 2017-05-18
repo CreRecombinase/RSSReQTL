@@ -348,9 +348,9 @@ rssr_all <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T,
   library(BBmisc)
   library(purrr)
 
-  paramdf <- list(sigb=sigb,logodds=logodds) %>% cross_d() %>% distinct()
-  sigb <- paramdf$sigb
-  logodds <- paramdf$logodds  
+  # paramdf <- list(sigb=sigb,logodds=logodds) %>% cross_d() %>% distinct()
+  # sigb <- paramdf$sigb
+  # logodds <- paramdf$logodds  
   
   stopifnot(ncol(R)==nrow(betahat_mat),
             ncol(betahat_mat)==ncol(se_mat),
@@ -567,22 +567,20 @@ gen_eQTL <- function(eqtl_snpfile,eqtl_expfile,eqtl_explist,eqtl_snplist,scale_o
   library(dplyr)
   stopifnot(file.exists(eqtl_expfile))
   exp_fgeneid <- read_vec(eqtl_expfile,"EXPinfo/fgeneid")[eqtl_explist]
-  eqtl_snpdat <- read_2d_index_h5(eqtl_snpfile,"SNPdata","genotype",eqtl_snplist)
-  eqtl_expdat <- read_2d_index_h5(eqtl_expfile,"EXPdata","expression",eqtl_explist)
+  eqtl_snpdat <- read_2d_index_h5(eqtl_snpfile,"SNPdata","orthogenotype",eqtl_snplist)
+  eqtl_expdat <- read_2d_index_h5(eqtl_expfile,"EXPdata","orthoexpression",eqtl_explist)
 
   eqtl_covdat <- read_2d_mat_h5(eqtl_expfile,"Covardat","covariates")
   ortho_covdat <- rssr_orthogonalize_covar(cbind(1,eqtl_covdat))
   
   
-  teqtl_df <- list()
-  ortho_genodat <- orthogonalize_data(eqtl_snpdat,ortho_covdat)
-  ortho_expdat <- scale(orthogonalize_data(eqtl_expdat,ortho_covdat),center=scale_ortho_exp,scale=scale_ortho_exp)
+  # teqtl_df <- list()
+  ortho_genodat <- scale(orthogonalize_data(eqtl_snpdat,ortho_covdat),center=T)
+  ortho_expdat <- scale(orthogonalize_data(eqtl_expdat,ortho_covdat),center=T)
   
-  
-  for(i in 1:ncol(eqtl_expdat)){
-    teqtl_df[[i]] <-map_eqtl_lm(ortho_genodat,ortho_expdat[,i]) %>% mutate(fgeneid=exp_fgeneid[i])
-  }
-  return(teqtl_df)
+  betahat_mat <- map_beta_exp(ortho_genodat,ortho_expdat)
+  semat <- map_se_exp(ortho_genodat,expression = ortho_expdat,betahat = betahat_mat)
+  return(list("betahat"=betahat_mat,"se"=semat))
 }
   
   

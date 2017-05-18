@@ -1,4 +1,4 @@
-read_snpleg_h5 <- function(snpchunkname){
-  requireNamespace("RcppEigenH5")
-    
-}
+# read_snpleg_h5 <- function(snpchunkname){
+#   requireNamespace("RcppEigenH5")
+#     
+# }
