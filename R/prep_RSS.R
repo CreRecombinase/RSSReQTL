@@ -503,7 +503,7 @@ gen_LD <- function(ld_snpfile,ld_snplist,m=85,Ne=11490.672741,cutoff=1e-3,mapA=N
   #  ld_ldf<-read_attr(param_snpfile,as.character(snp_chunk),"1kg_filepath")
   stopifnot(file.exists(ld_snpfile))
   #  ld_snplist <- read_vec(param_snpfile,paste0("/",snp_chunk,"/1kg"))
-  
+  stopifnot(!is.unsorted(ld_snplist))
   if(is.null(snpA)){
     snpA <-read_2d_index_h5(ld_snpfile,"SNPdata","genotype",ld_snplist)
   }
@@ -511,10 +511,12 @@ gen_LD <- function(ld_snpfile,ld_snplist,m=85,Ne=11490.672741,cutoff=1e-3,mapA=N
     mapA <- read_1d_index_h5(ld_snpfile,"SNPinfo","map",ld_snplist)
     # mapA <-read_vec(ld_snpfile,"/SNPinfo/map")[ld_snplist]
   }
+  stopifnot(!is.unsorted(mapA))
   
   stopifnot(ncol(snpA)==length(ld_snplist),length(mapA)==length(ld_snplist))
   
   sp_R <- calcLD(snpA,mapA,m,Ne,cutoff)
+  sp_R[abs(sp_R)>1] <- ifelse(sp_R[abs(sp_R)>1]>0,1,-1)
   return(sp_R)
 }
 
