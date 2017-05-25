@@ -17,16 +17,12 @@ calc_nmsum <- function(m) {
     .Call('RSSReQTL_calc_nmsum', PACKAGE = 'RSSReQTL', m)
 }
 
+calc_theta <- function(m) {
+    .Call('RSSReQTL_calc_theta', PACKAGE = 'RSSReQTL', m)
+}
+
 ld2df <- function(ldmat, rsid, r2cutoff = 0.01) {
     .Call('RSSReQTL_ld2df', PACKAGE = 'RSSReQTL', ldmat, rsid, r2cutoff)
-}
-
-calc_dist <- function(map) {
-    .Call('RSSReQTL_calc_dist_exp', PACKAGE = 'RSSReQTL', map)
-}
-
-test_calc_shrink <- function(map, Hpanel, Ne, m, cutoff) {
-    .Call('RSSReQTL_test_calc_shrink', PACKAGE = 'RSSReQTL', map, Hpanel, Ne, m, cutoff)
 }
 
 calc_cov <- function(mat) {
@@ -37,12 +33,8 @@ calc_variance <- function(mat) {
     .Call('RSSReQTL_calc_variance_exp', PACKAGE = 'RSSReQTL', mat)
 }
 
-cov_2_cor <- function(covmat, rowvar) {
-    .Call('RSSReQTL_cov_2_cor_exp', PACKAGE = 'RSSReQTL', covmat, rowvar)
-}
-
-calc_shrinkage <- function(distmat, S, hmata, theta, m, Ne, cutoff) {
-    .Call('RSSReQTL_calc_shrinkage', PACKAGE = 'RSSReQTL', distmat, S, hmata, theta, m, Ne, cutoff)
+cov_2_cor <- function(covmat) {
+    .Call('RSSReQTL_cov_2_cor_exp', PACKAGE = 'RSSReQTL', covmat)
 }
 
 calcLD <- function(hmata, mapa, m, Ne, cutoff) {

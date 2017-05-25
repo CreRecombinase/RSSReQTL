@@ -2,4 +2,4 @@ useDynLib(RSSReQTL)
 import(RcppEigen)
 importFrom(Rcpp, evalCpp)
 exportPattern("^[[:alpha:]]+")
-importFrom(RcppParallel,RcppParallelLibs)
+

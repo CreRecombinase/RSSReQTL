@@ -61,6 +61,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// calc_theta
+double calc_theta(const double m);
+RcppExport SEXP RSSReQTL_calc_theta(SEXP mSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const double >::type m(mSEXP);
+    rcpp_result_gen = Rcpp::wrap(calc_theta(m));
+    return rcpp_result_gen;
+END_RCPP
+}
 // ld2df
 Rcpp::DataFrame ld2df(const Matrix_external ldmat, Rcpp::StringVector rsid, const double r2cutoff);
 RcppExport SEXP RSSReQTL_ld2df(SEXP ldmatSEXP, SEXP rsidSEXP, SEXP r2cutoffSEXP) {
@@ -71,32 +82,6 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::StringVector >::type rsid(rsidSEXP);
     Rcpp::traits::input_parameter< const double >::type r2cutoff(r2cutoffSEXP);
     rcpp_result_gen = Rcpp::wrap(ld2df(ldmat, rsid, r2cutoff));
-    return rcpp_result_gen;
-END_RCPP
-}
-// calc_dist_exp
-Eigen::MatrixXd calc_dist_exp(arrayxd_external map);
-RcppExport SEXP RSSReQTL_calc_dist_exp(SEXP mapSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arrayxd_external >::type map(mapSEXP);
-    rcpp_result_gen = Rcpp::wrap(calc_dist_exp(map));
-    return rcpp_result_gen;
-END_RCPP
-}
-// test_calc_shrink
-Eigen::MatrixXd test_calc_shrink(arrayxd_external map, Matrix_external Hpanel, const double Ne, const double m, const double cutoff);
-RcppExport SEXP RSSReQTL_test_calc_shrink(SEXP mapSEXP, SEXP HpanelSEXP, SEXP NeSEXP, SEXP mSEXP, SEXP cutoffSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arrayxd_external >::type map(mapSEXP);
-    Rcpp::traits::input_parameter< Matrix_external >::type Hpanel(HpanelSEXP);
-    Rcpp::traits::input_parameter< const double >::type Ne(NeSEXP);
-    Rcpp::traits::input_parameter< const double >::type m(mSEXP);
-    Rcpp::traits::input_parameter< const double >::type cutoff(cutoffSEXP);
-    rcpp_result_gen = Rcpp::wrap(test_calc_shrink(map, Hpanel, Ne, m, cutoff));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -123,31 +108,13 @@ BEGIN_RCPP
 END_RCPP
 }
 // cov_2_cor_exp
-Eigen::MatrixXd cov_2_cor_exp(Matrix_external covmat, arrayxd_external rowvar);
-RcppExport SEXP RSSReQTL_cov_2_cor_exp(SEXP covmatSEXP, SEXP rowvarSEXP) {
+Eigen::MatrixXd cov_2_cor_exp(Matrix_external covmat);
+RcppExport SEXP RSSReQTL_cov_2_cor_exp(SEXP covmatSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Matrix_external >::type covmat(covmatSEXP);
-    Rcpp::traits::input_parameter< arrayxd_external >::type rowvar(rowvarSEXP);
-    rcpp_result_gen = Rcpp::wrap(cov_2_cor_exp(covmat, rowvar));
-    return rcpp_result_gen;
-END_RCPP
-}
-// calc_shrinkage
-Eigen::MatrixXd calc_shrinkage(Matrix_external distmat, Matrix_external S, Matrix_external hmata, const double theta, const double m, const double Ne, const double cutoff);
-RcppExport SEXP RSSReQTL_calc_shrinkage(SEXP distmatSEXP, SEXP SSEXP, SEXP hmataSEXP, SEXP thetaSEXP, SEXP mSEXP, SEXP NeSEXP, SEXP cutoffSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Matrix_external >::type distmat(distmatSEXP);
-    Rcpp::traits::input_parameter< Matrix_external >::type S(SSEXP);
-    Rcpp::traits::input_parameter< Matrix_external >::type hmata(hmataSEXP);
-    Rcpp::traits::input_parameter< const double >::type theta(thetaSEXP);
-    Rcpp::traits::input_parameter< const double >::type m(mSEXP);
-    Rcpp::traits::input_parameter< const double >::type Ne(NeSEXP);
-    Rcpp::traits::input_parameter< const double >::type cutoff(cutoffSEXP);
-    rcpp_result_gen = Rcpp::wrap(calc_shrinkage(distmat, S, hmata, theta, m, Ne, cutoff));
+    rcpp_result_gen = Rcpp::wrap(cov_2_cor_exp(covmat));
     return rcpp_result_gen;
 END_RCPP
 }

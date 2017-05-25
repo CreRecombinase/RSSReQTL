@@ -16,7 +16,7 @@ I've been asked to compute LD at the following places.  For starters, let's do W
 
 
 
-```{r}
+```{r,eval=F}
 library(dplyr)
 library(tidyr)
 library(RcppEigenH5)

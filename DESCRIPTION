@@ -1,15 +1,13 @@
 Package: RSSReQTL
 Type: Package
-Title: What the package does (short line)
+Title: Map QTL and compute LD using the Wen and Stephens shrinkage estimator.
 Version: 1.0
 Date: 2017-03-22
-Author: Who wrote it
-Maintainer: Who to complain to <yourfault@somewhere.net>
-Description: More about what it does (maybe more than one line)
-License: What license is it under?
+Author: Nicholas Knoblauch
+Maintainer: Nicholas Knoblauch <nwknoblauch@gmail.com>
+Description: Map QTL and compute LD using the Wen and Stephens shrinkage estimator. Companion package to rssr.
+License: GPL (>= 3)
 Imports: Rcpp (>= 0.12.10), RcppEigen (>= 0.3.2.9.1)
-LinkingTo: Rcpp, RcppEigen,RcppParallel
-Suggests: testthat,
-    knitr,
-    rmarkdown
+LinkingTo: Rcpp, RcppEigen
+Suggests: testthat, knitr,rmarkdown
 VignetteBuilder: knitr
