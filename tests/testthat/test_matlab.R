@@ -100,19 +100,14 @@ test_that("LD shrinkage estimators work the same real (larger) data and a big cu
   #change to the directory with the .m files in Octave
   library(RcppOctave)
   .CallOctave('cd',mdir)
-  msig <- .CallOctave('shrink_cov',m,Ne,tmap,Hpanel,cutoff)
-  Rmsig <- cov2cor(msig)
-  
-  Rsig <- calcLD(hmata = Hpanel,mapa = tmap,m = m,Ne = Ne,cutoff = cutoff)
-  
-  expect_equal(Rsig,Rmsig)
   cutoff=.5
   msig <- .CallOctave('shrink_cov',m,Ne,tmap,Hpanel,cutoff)
   Rmsig <- cov2cor(msig)
   
   Rsig <- calcLD(hmata = Hpanel,mapa = tmap,m = m,Ne = Ne,cutoff = cutoff)
+  
   expect_equal(Rsig,Rmsig)
-  evd <- eigen(Rsig)
+  
   
 })
 
