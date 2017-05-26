@@ -516,7 +516,6 @@ gen_LD <- function(ld_snpfile,ld_snplist,m=85,Ne=11490.672741,cutoff=1e-3,mapA=N
   stopifnot(ncol(snpA)==length(ld_snplist),length(mapA)==length(ld_snplist))
   
   sp_R <- calcLD(snpA,mapA,m,Ne,cutoff)
-  sp_R[abs(sp_R)>1] <- ifelse(sp_R[abs(sp_R)>1]>0,1,-1)
   return(sp_R)
 }
 

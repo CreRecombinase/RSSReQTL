@@ -148,10 +148,7 @@ Eigen::MatrixXd cov_2_cor_exp(Matrix_external covmat){
 
 Eigen::MatrixXd calcLD(const c_Matrix_internal hmata,const c_arrayxd_internal mapa,const double m, const double Ne, const double cutoff){
   
-  // % S is obtained from Sigma_panel by shrinking off-diagonal entries toward 0
-  // % NB: Hpanel is a phased haplotype matrix
-  // S = cov(Hpanel);
-  // S = triu(S);
+ 
   double dosage_max=hmata.maxCoeff();
   bool isGeno=dosage_max>1;
   if(isGeno){
@@ -160,7 +157,7 @@ Eigen::MatrixXd calcLD(const c_Matrix_internal hmata,const c_arrayxd_internal ma
   
   double theta=calc_theta(m);
   Eigen::MatrixXd S= calc_cov(hmata);
-  size_t numSNP=S.rows();
+  int numSNP=S.rows();
   S.triangularView<Eigen::StrictlyLower>().setZero();
   std::vector<double> mapv;
   mapv.resize(mapa.size());
@@ -178,9 +175,6 @@ Eigen::MatrixXd calcLD(const c_Matrix_internal hmata,const c_arrayxd_internal ma
     ti=mapa(i);
     for(int j=i+1; j<numSNP;j++){
       tj=mapa(j);
-      // if(tj-ti<0){
-      //   Rcpp::stop("Negative recombination rate not allowed!");
-      // }
       rho = 4*Ne*(tj-ti)/100;
       rho=-rho/(2*m);
       tshrinkage=std::exp(rho);
@@ -191,14 +185,18 @@ Eigen::MatrixXd calcLD(const c_Matrix_internal hmata,const c_arrayxd_internal ma
     }
   }
   
-
+  // S=S+S.triangularView<Eigen::StrictlyUpper>().transpose();
 
   S.triangularView<Eigen::StrictlyLower>()=S.transpose();
-  Eigen::MatrixXd SigHat = (1-theta)*(1-theta)*S;
-  SigHat.diagonal() = SigHat.diagonal().array()+0.5*theta*(1-0.5*theta);
+  Eigen::ArrayXd eye(numSNP);
+  eye.setOnes();
+  eye=eye.array()*(0.5*theta * (1-0.5*theta));
+  
+  Eigen::MatrixXd SigHat = ((1-theta)*(1-theta))*S.array();
+  SigHat.diagonal() = SigHat.diagonal().array()+eye;
   //       % SigHat is derived from Li and Stephens model (2003)
   //         SigHat = (1-theta)^2 * S + 0.5*theta * (1-0.5*theta) * eye(numSNP);
-  
+  // SigHat = (1-theta)^2 * S + 0.5*theta * (1-0.5*theta) * eye(numSNP);
   cov_2_cor(SigHat);
   return(SigHat);
 }
