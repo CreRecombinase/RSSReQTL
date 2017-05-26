@@ -133,6 +133,7 @@ void cov_2_cor(Matrix_internal covmat){
   Eigen::ArrayXd rowvar=1/covmat.diagonal().array().sqrt();
   covmat.array().colwise()*=rowvar;
   covmat.array().rowwise()*=rowvar.transpose();
+  covmat.diagonal().setOnes();
 }
 
 //[[Rcpp::export(name="cov_2_cor")]]
