@@ -1,7 +1,8 @@
 // -*- mode: C++; c-indent-level: 4; c-basic-offset: 4; indent-tabs-mode: nil; -*-
 #include <RSSReQTL.h>
 // [[Rcpp::depends(RcppEigen)]]
-
+#include <RcppParallel.h>
+//[[Rcpp::depends(RcppParallel)]]
 
 Eigen::MatrixXd eqtl_orthogonalize_covar( c_Matrix_internal covariates){
   Eigen::HouseholderQR<Eigen::MatrixXd> qr(covariates);
@@ -51,8 +52,37 @@ Eigen::MatrixXd map_eqtl_lm(Matrix_internal genotype, arrayxd_internal expressio
   return(retmat);
 }
 
+
+// class map_beta_se{
+//   const size_t n_snp = genotype.cols();
+//   const size_t n_gene = expression.cols();
+//   const size_t tot=n_snp*n_gene;
+//   const Eigen::ArrayXd(genotype)
+//   Eigen::ArrayXd betahatvec(n_snp*n_gene);
+//   Eigen::ArrayXd sehatvec(n_snp*n_gene);
+// 
+// };
+
+
+// Rcpp::DataFrame map_beta_se(const Matrix_internal genotype,const Matrix_internal expression){
+// 
+//   size_t n_snp = genotype.cols();
+//   size_t n_gene = expression.cols();
+//   size_t tot=n_snp*n_gene;
+//   Eigen::ArrayXd betahatvec(n_snp*n_gene);
+//   Eigen::ArrayXd sehatvec(n_snp*n_gene);
+// 
+//   parallel_for(blocked_range    )
+// 
+// 
+// }
+
+
 Eigen::MatrixXd map_beta(const Matrix_internal genotype,const Matrix_internal expression){
   
+  
+  
+
   Eigen::ArrayXd sx2 =genotype.array().square().colwise().sum();
   //  Rcpp::Rcout<<"sx2 has: "<<sx2.size()<<"elements"<<std::endl;
   return((genotype.transpose()*expression).array().colwise()/sx2);
