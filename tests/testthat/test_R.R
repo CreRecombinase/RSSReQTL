@@ -85,6 +85,20 @@ test_that("eQTL mapping (for multiple traits & multiple SNPs) works as in R",{
   expect_equal(mse,r_semat,tolerance=1e-4)
 })
 
+test_that("new way of computing see works",{
+  
+  
+  test_se <-   function(genotype,expression,betahat){
+  
+    yh <- genotype%*%betahat
+    byh <- kronecker(betahat,genotype)
+    bresid 
+    
+    
+    
+  }
+})
+
 
 test_that("calculation of covariance matrix works as expected",{
   tdat <- matrix(runif(9*8),8,9)
@@ -129,6 +143,8 @@ test_that("LD shrinkage estimator doesn't throw error when the cummap is non-dec
   # mfile <- system.file("m_files/run_install.m",package="rssr")
   mLD <- calcLD(hmata = Hpanel,mapa = tmap,m = m,Ne = Ne,cutoff = cutoff)
 })
+
+
 
 
 

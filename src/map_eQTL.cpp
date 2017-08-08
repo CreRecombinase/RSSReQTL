@@ -95,13 +95,17 @@ Eigen::MatrixXd map_se(const Matrix_internal genotype,const Matrix_internal expr
   size_t n=genotype.rows();
   Eigen::MatrixXd semat(s,g);
   Eigen::ArrayXd sx2 =genotype.array().square().colwise().sum();
+//  Rcpp::Rcout<<sx2<<std::endl;
   Eigen::MatrixXd resmat(n,s);
   Eigen::ArrayXd resvec(s);
   Eigen::MatrixXd yh(n,s);
   for(int i=0;i<g;i++){
     yh = genotype.array().rowwise()*betahat.col(i).array().transpose();
+//    Rcpp::Rcout<<yh<<std::endl;
     resmat =((yh.array().colwise()-expression.col(i).array()));
+//    Rcpp::Rcout<<resmat<<std::endl;
     resvec = (resmat.array().square()/n).colwise().sum().sqrt();
+//    Rcpp::Rcout<<resvec<<std::endl;
     semat.col(i)=resvec.array()*sx2.sqrt().inverse();
   }
   return(semat);
@@ -110,6 +114,7 @@ Eigen::MatrixXd map_se(const Matrix_internal genotype,const Matrix_internal expr
 //[[Rcpp::export]]
 Eigen::MatrixXd map_se_exp(const Matrix_external genotype,const Matrix_external expression,const Matrix_external betahat){
   return(map_se(genotype,expression,betahat));
+
 }
 
 

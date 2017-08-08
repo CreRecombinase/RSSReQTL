@@ -153,13 +153,13 @@ rssr_max <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T,
     alpha0 <- ralpha(p = p)
     mu0 <-rmu(p)
     SiRiSr <- (SiRiS%*%(alpha0*mu0))
-    retdf <- grid_search_rss_varbvsr(SiRiS = SiRiS,
+    retdf <- grid_search_rss_varbvsr_alt(SiRiS = SiRiS,
                                      sigma_beta = sigb,
                                      logodds = logodds,
                                      betahat = betahat_mat[,i],
                                      se = se_mat[,i],talpha0 = alpha0,
                                      tmu0 = mu0,tSiRiSr0 = SiRiSr,
-                                     tolerance = tolerance,itermax=100,verbose = F,
+                                     tolerance = tolerance,itermax=100,
                                      lnz_tol = lnz_tol) %>% filter(lnZ==max(lnZ)) %>% slice(1)
     retmat[i,1] <- retdf$lnZ
     retmat[i,2] <- retdf$sigb
@@ -225,13 +225,13 @@ rssr_mean <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T
     if(!is.null(tsigb)){
       sigb <- tsigb[i]
     }
-    retdf <- grid_search_rss_varbvsr(SiRiS = SiRiS,
+    retdf <- grid_search_rss_varbvsr_alt(SiRiS = SiRiS,
                                      sigma_beta = sigb,
                                      logodds = logodds,
                                      betahat = betahat_mat[,i],
                                      se = se_mat[,i],talpha0 = alpha0,
                                      tmu0 = mu0,tSiRiSr0 = SiRiSr,
-                                     tolerance = tolerance,itermax=100,verbose = F,
+                                     tolerance = tolerance,itermax=100,
                                      lnz_tol = lnz_tol) %>% 
       mutate(pi=exp(logodds)/(exp(logodds)+1),w=normalizeLogWeights(lnZ,na.rm=T)) %>% 
       summarise(mean_pi=sum(w*pi),mean_sigma=sum(w*sigb),mean_logodds=sum(w*logodds),mean_alpha=sum(w*(alpha_mean)))
@@ -340,7 +340,7 @@ tspve_all <- function(R,betahat_mat,se_mat,betamat,n,fgeneid=NULL){
 
 
 
-rssr_all <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T,itermax=200,fgeneid=NULL,n=1,use_squarem=T){
+rssr_all <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T,itermax=200,fgeneid=NULL,n=1,use_squarem=T,showProgress=T){
   
   library(dplyr)
   library(rssr)
@@ -368,8 +368,9 @@ rssr_all <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T,
   retl <- list()
   p <- nrow(betahat_mat)
   
-  
-  pb <- progress_bar$new(total=ng)
+  if(showProgress){
+    pb <- progress_bar$new(total=ng)
+  }
   retdfl <- list()
   nind=n
   for(i in 1:ng){
@@ -381,13 +382,13 @@ rssr_all <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T,
     SiRiSr <- (SiRiS%*%(alpha0*mu0))
     mfgeneid <- fgeneid[i]
     if(use_squarem){
-      retdfl[[i]] <- grid_search_rss_varbvsr(SiRiS = SiRiS,
+      retdfl[[i]] <- grid_search_rss_varbvsr_alt(SiRiS = SiRiS,
                                              sigma_beta = sigb,
                                              logodds = logodds,
                                              betahat = betahat_mat[,i],
                                              se = se_mat[,i],talpha0 = alpha0,
                                              tmu0 = mu0,tSiRiSr0 = SiRiSr,
-                                             tolerance = tolerance,itermax=itermax,verbose = F,
+                                             tolerance = tolerance,itermax=itermax,
                                              lnz_tol = lnz_tol) %>% 
         mutate(pi=exp(logodds)/(exp(logodds)+1),pve=pve/nind,fgeneid=mfgeneid)
     }else{
@@ -403,7 +404,9 @@ rssr_all <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T,
       
       
     }
-    pb$tick()
+    if(showProgress){
+      pb$tick()
+    }
   }
   return(bind_rows(retdfl))
   #    data_frame(lnZ=lnZvec,pi=pivec,alpha_mean=alpha_meanvec,sigb=sigbvec,fgeneid=fgeneidvec,pve=pvevec))
@@ -412,7 +415,7 @@ rssr_all <- function(R,betahat_mat,se_mat,sigb,logodds,tolerance=1e-3,lnz_tol=T,
 
 
 
-rssr_all_norm <- function(R,betahat_mat,se_mat,sigb,tolerance=1e-3,lnz_tol=T,itermax=200,fgeneid=NULL,n=1,use_squarem=T){
+rssr_all_norm <- function(R,betahat_mat,se_mat,sigb,tolerance=1e-3,lnz_tol=T,itermax=200,fgeneid=NULL,n=1,use_squarem=T,showProgress=T){
   
   library(dplyr)
   library(rssr)
@@ -438,8 +441,9 @@ rssr_all_norm <- function(R,betahat_mat,se_mat,sigb,tolerance=1e-3,lnz_tol=T,ite
   retl <- list()
   p <- nrow(betahat_mat)
   
-  
+  if(showProgress){
   pb <- progress_bar$new(total=ng)
+  }
   retdfl <- list()
   nind=n
   for(i in 1:ng){
@@ -471,7 +475,9 @@ rssr_all_norm <- function(R,betahat_mat,se_mat,sigb,tolerance=1e-3,lnz_tol=T,ite
       
       
     }
+    if(showProgress){
     pb$tick()
+    }
   }
   return(bind_rows(retdfl))
   #    data_frame(lnZ=lnZvec,pi=pivec,alpha_mean=alpha_meanvec,sigb=sigbvec,fgeneid=fgeneidvec,pve=pvevec))

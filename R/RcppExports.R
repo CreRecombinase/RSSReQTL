@@ -2,70 +2,70 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 calc_spve_naive <- function(R, beta, beta_hat, se_hat, n) {
-    .Call('RSSReQTL_calc_spve_naive', PACKAGE = 'RSSReQTL', R, beta, beta_hat, se_hat, n)
+    .Call('_RSSReQTL_calc_spve_naive', PACKAGE = 'RSSReQTL', R, beta, beta_hat, se_hat, n)
 }
 
 calc_spve <- function(R, beta_mat, beta_hat_mat, se_hat_mat, n) {
-    .Call('RSSReQTL_calc_spve', PACKAGE = 'RSSReQTL', R, beta_mat, beta_hat_mat, se_hat_mat, n)
+    .Call('_RSSReQTL_calc_spve', PACKAGE = 'RSSReQTL', R, beta_mat, beta_hat_mat, se_hat_mat, n)
 }
 
 sub_calc_spve <- function(R, tbeta, n) {
-    .Call('RSSReQTL_sub_calc_spve', PACKAGE = 'RSSReQTL', R, tbeta, n)
+    .Call('_RSSReQTL_sub_calc_spve', PACKAGE = 'RSSReQTL', R, tbeta, n)
 }
 
 calc_nmsum <- function(m) {
-    .Call('RSSReQTL_calc_nmsum', PACKAGE = 'RSSReQTL', m)
+    .Call('_RSSReQTL_calc_nmsum', PACKAGE = 'RSSReQTL', m)
 }
 
 calc_theta <- function(m) {
-    .Call('RSSReQTL_calc_theta', PACKAGE = 'RSSReQTL', m)
+    .Call('_RSSReQTL_calc_theta', PACKAGE = 'RSSReQTL', m)
 }
 
 ld2df <- function(ldmat, rsid, r2cutoff = 0.01) {
-    .Call('RSSReQTL_ld2df', PACKAGE = 'RSSReQTL', ldmat, rsid, r2cutoff)
+    .Call('_RSSReQTL_ld2df', PACKAGE = 'RSSReQTL', ldmat, rsid, r2cutoff)
 }
 
 calc_cov <- function(mat) {
-    .Call('RSSReQTL_calc_cov_exp', PACKAGE = 'RSSReQTL', mat)
+    .Call('_RSSReQTL_calc_cov_exp', PACKAGE = 'RSSReQTL', mat)
 }
 
 calc_variance <- function(mat) {
-    .Call('RSSReQTL_calc_variance_exp', PACKAGE = 'RSSReQTL', mat)
+    .Call('_RSSReQTL_calc_variance_exp', PACKAGE = 'RSSReQTL', mat)
 }
 
 cov_2_cor <- function(covmat) {
-    .Call('RSSReQTL_cov_2_cor_exp', PACKAGE = 'RSSReQTL', covmat)
+    .Call('_RSSReQTL_cov_2_cor_exp', PACKAGE = 'RSSReQTL', covmat)
 }
 
 calcLD <- function(hmata, mapa, m, Ne, cutoff) {
-    .Call('RSSReQTL_calcLD_exp', PACKAGE = 'RSSReQTL', hmata, mapa, m, Ne, cutoff)
+    .Call('_RSSReQTL_calcLD_exp', PACKAGE = 'RSSReQTL', hmata, mapa, m, Ne, cutoff)
 }
 
 sp_calcLD <- function(hmata, mapa, m, Ne, cutoff) {
-    .Call('RSSReQTL_sp_calcLD_exp', PACKAGE = 'RSSReQTL', hmata, mapa, m, Ne, cutoff)
+    .Call('_RSSReQTL_sp_calcLD_exp', PACKAGE = 'RSSReQTL', hmata, mapa, m, Ne, cutoff)
 }
 
 sp_calcLD_symm <- function(hmata, mapa, m, Ne, cutoff) {
-    .Call('RSSReQTL_sp_calcLD_symm_exp', PACKAGE = 'RSSReQTL', hmata, mapa, m, Ne, cutoff)
+    .Call('_RSSReQTL_sp_calcLD_symm_exp', PACKAGE = 'RSSReQTL', hmata, mapa, m, Ne, cutoff)
 }
 
 orthogonalize_data <- function(data, ortho_covar) {
-    .Call('RSSReQTL_orthogonalize_data_exp', PACKAGE = 'RSSReQTL', data, ortho_covar)
+    .Call('_RSSReQTL_orthogonalize_data_exp', PACKAGE = 'RSSReQTL', data, ortho_covar)
 }
 
 rssr_orthogonalize_covar <- function(covariates) {
-    .Call('RSSReQTL_rssr_orthogonalize_covar', PACKAGE = 'RSSReQTL', covariates)
+    .Call('_RSSReQTL_rssr_orthogonalize_covar', PACKAGE = 'RSSReQTL', covariates)
 }
 
 map_se_exp <- function(genotype, expression, betahat) {
-    .Call('RSSReQTL_map_se_exp', PACKAGE = 'RSSReQTL', genotype, expression, betahat)
+    .Call('_RSSReQTL_map_se_exp', PACKAGE = 'RSSReQTL', genotype, expression, betahat)
 }
 
 map_beta_exp <- function(genotype, expression) {
-    .Call('RSSReQTL_map_beta_exp', PACKAGE = 'RSSReQTL', genotype, expression)
+    .Call('_RSSReQTL_map_beta_exp', PACKAGE = 'RSSReQTL', genotype, expression)
 }
 
 map_eqtl_lm <- function(genotype, expression) {
-    .Call('RSSReQTL_map_eqtl_lm_exp', PACKAGE = 'RSSReQTL', genotype, expression)
+    .Call('_RSSReQTL_map_eqtl_lm_exp', PACKAGE = 'RSSReQTL', genotype, expression)
 }
 

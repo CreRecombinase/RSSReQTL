@@ -9,7 +9,7 @@ using namespace Rcpp;
 
 // calc_spve_naive
 double calc_spve_naive(const Matrix_external R, const arrayxd_external beta, const arrayxd_external beta_hat, const arrayxd_external se_hat, const int n);
-RcppExport SEXP RSSReQTL_calc_spve_naive(SEXP RSEXP, SEXP betaSEXP, SEXP beta_hatSEXP, SEXP se_hatSEXP, SEXP nSEXP) {
+RcppExport SEXP _RSSReQTL_calc_spve_naive(SEXP RSEXP, SEXP betaSEXP, SEXP beta_hatSEXP, SEXP se_hatSEXP, SEXP nSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -24,7 +24,7 @@ END_RCPP
 }
 // calc_spve
 Eigen::ArrayXd calc_spve(const Eigen::MatrixXd& R, const Eigen::MatrixXd& beta_mat, const Eigen::MatrixXd& beta_hat_mat, const Eigen::MatrixXd& se_hat_mat, const int n);
-RcppExport SEXP RSSReQTL_calc_spve(SEXP RSEXP, SEXP beta_matSEXP, SEXP beta_hat_matSEXP, SEXP se_hat_matSEXP, SEXP nSEXP) {
+RcppExport SEXP _RSSReQTL_calc_spve(SEXP RSEXP, SEXP beta_matSEXP, SEXP beta_hat_matSEXP, SEXP se_hat_matSEXP, SEXP nSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -39,7 +39,7 @@ END_RCPP
 }
 // sub_calc_spve
 Eigen::ArrayXd sub_calc_spve(const Eigen::MatrixXd& R, const Eigen::MatrixXd tbeta, const int n);
-RcppExport SEXP RSSReQTL_sub_calc_spve(SEXP RSEXP, SEXP tbetaSEXP, SEXP nSEXP) {
+RcppExport SEXP _RSSReQTL_sub_calc_spve(SEXP RSEXP, SEXP tbetaSEXP, SEXP nSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -52,7 +52,7 @@ END_RCPP
 }
 // calc_nmsum
 double calc_nmsum(const double m);
-RcppExport SEXP RSSReQTL_calc_nmsum(SEXP mSEXP) {
+RcppExport SEXP _RSSReQTL_calc_nmsum(SEXP mSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -63,7 +63,7 @@ END_RCPP
 }
 // calc_theta
 double calc_theta(const double m);
-RcppExport SEXP RSSReQTL_calc_theta(SEXP mSEXP) {
+RcppExport SEXP _RSSReQTL_calc_theta(SEXP mSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -74,7 +74,7 @@ END_RCPP
 }
 // ld2df
 Rcpp::DataFrame ld2df(const Matrix_external ldmat, Rcpp::StringVector rsid, const double r2cutoff);
-RcppExport SEXP RSSReQTL_ld2df(SEXP ldmatSEXP, SEXP rsidSEXP, SEXP r2cutoffSEXP) {
+RcppExport SEXP _RSSReQTL_ld2df(SEXP ldmatSEXP, SEXP rsidSEXP, SEXP r2cutoffSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -87,7 +87,7 @@ END_RCPP
 }
 // calc_cov_exp
 Eigen::MatrixXd calc_cov_exp(Matrix_external mat);
-RcppExport SEXP RSSReQTL_calc_cov_exp(SEXP matSEXP) {
+RcppExport SEXP _RSSReQTL_calc_cov_exp(SEXP matSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -98,7 +98,7 @@ END_RCPP
 }
 // calc_variance_exp
 Eigen::ArrayXd calc_variance_exp(Matrix_external mat);
-RcppExport SEXP RSSReQTL_calc_variance_exp(SEXP matSEXP) {
+RcppExport SEXP _RSSReQTL_calc_variance_exp(SEXP matSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -109,7 +109,7 @@ END_RCPP
 }
 // cov_2_cor_exp
 Eigen::MatrixXd cov_2_cor_exp(Matrix_external covmat);
-RcppExport SEXP RSSReQTL_cov_2_cor_exp(SEXP covmatSEXP) {
+RcppExport SEXP _RSSReQTL_cov_2_cor_exp(SEXP covmatSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -120,7 +120,7 @@ END_RCPP
 }
 // calcLD_exp
 Eigen::MatrixXd calcLD_exp(Matrix_external hmata, arrayxd_external mapa, const double m, const double Ne, const double cutoff);
-RcppExport SEXP RSSReQTL_calcLD_exp(SEXP hmataSEXP, SEXP mapaSEXP, SEXP mSEXP, SEXP NeSEXP, SEXP cutoffSEXP) {
+RcppExport SEXP _RSSReQTL_calcLD_exp(SEXP hmataSEXP, SEXP mapaSEXP, SEXP mSEXP, SEXP NeSEXP, SEXP cutoffSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -135,7 +135,7 @@ END_RCPP
 }
 // sp_calcLD_exp
 Eigen::SparseMatrix<double> sp_calcLD_exp(Matrix_external hmata, arrayxd_external mapa, const double m, const double Ne, const double cutoff);
-RcppExport SEXP RSSReQTL_sp_calcLD_exp(SEXP hmataSEXP, SEXP mapaSEXP, SEXP mSEXP, SEXP NeSEXP, SEXP cutoffSEXP) {
+RcppExport SEXP _RSSReQTL_sp_calcLD_exp(SEXP hmataSEXP, SEXP mapaSEXP, SEXP mSEXP, SEXP NeSEXP, SEXP cutoffSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -150,7 +150,7 @@ END_RCPP
 }
 // sp_calcLD_symm_exp
 Eigen::SparseMatrix<double> sp_calcLD_symm_exp(Matrix_external hmata, arrayxd_external mapa, const double m, const double Ne, const double cutoff);
-RcppExport SEXP RSSReQTL_sp_calcLD_symm_exp(SEXP hmataSEXP, SEXP mapaSEXP, SEXP mSEXP, SEXP NeSEXP, SEXP cutoffSEXP) {
+RcppExport SEXP _RSSReQTL_sp_calcLD_symm_exp(SEXP hmataSEXP, SEXP mapaSEXP, SEXP mSEXP, SEXP NeSEXP, SEXP cutoffSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -165,7 +165,7 @@ END_RCPP
 }
 // orthogonalize_data_exp
 Eigen::MatrixXd orthogonalize_data_exp(Matrix_external data, Matrix_external ortho_covar);
-RcppExport SEXP RSSReQTL_orthogonalize_data_exp(SEXP dataSEXP, SEXP ortho_covarSEXP) {
+RcppExport SEXP _RSSReQTL_orthogonalize_data_exp(SEXP dataSEXP, SEXP ortho_covarSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -177,7 +177,7 @@ END_RCPP
 }
 // rssr_orthogonalize_covar
 Eigen::MatrixXd rssr_orthogonalize_covar(Matrix_external covariates);
-RcppExport SEXP RSSReQTL_rssr_orthogonalize_covar(SEXP covariatesSEXP) {
+RcppExport SEXP _RSSReQTL_rssr_orthogonalize_covar(SEXP covariatesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -188,7 +188,7 @@ END_RCPP
 }
 // map_se_exp
 Eigen::MatrixXd map_se_exp(const Matrix_external genotype, const Matrix_external expression, const Matrix_external betahat);
-RcppExport SEXP RSSReQTL_map_se_exp(SEXP genotypeSEXP, SEXP expressionSEXP, SEXP betahatSEXP) {
+RcppExport SEXP _RSSReQTL_map_se_exp(SEXP genotypeSEXP, SEXP expressionSEXP, SEXP betahatSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -201,7 +201,7 @@ END_RCPP
 }
 // map_beta_exp
 Eigen::MatrixXd map_beta_exp(const Matrix_external genotype, const Matrix_external expression);
-RcppExport SEXP RSSReQTL_map_beta_exp(SEXP genotypeSEXP, SEXP expressionSEXP) {
+RcppExport SEXP _RSSReQTL_map_beta_exp(SEXP genotypeSEXP, SEXP expressionSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -213,7 +213,7 @@ END_RCPP
 }
 // map_eqtl_lm_exp
 Rcpp::DataFrame map_eqtl_lm_exp(Matrix_external genotype, arrayxd_external expression);
-RcppExport SEXP RSSReQTL_map_eqtl_lm_exp(SEXP genotypeSEXP, SEXP expressionSEXP) {
+RcppExport SEXP _RSSReQTL_map_eqtl_lm_exp(SEXP genotypeSEXP, SEXP expressionSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -222,4 +222,30 @@ BEGIN_RCPP
     rcpp_result_gen = Rcpp::wrap(map_eqtl_lm_exp(genotype, expression));
     return rcpp_result_gen;
 END_RCPP
+}
+
+static const R_CallMethodDef CallEntries[] = {
+    {"_RSSReQTL_calc_spve_naive", (DL_FUNC) &_RSSReQTL_calc_spve_naive, 5},
+    {"_RSSReQTL_calc_spve", (DL_FUNC) &_RSSReQTL_calc_spve, 5},
+    {"_RSSReQTL_sub_calc_spve", (DL_FUNC) &_RSSReQTL_sub_calc_spve, 3},
+    {"_RSSReQTL_calc_nmsum", (DL_FUNC) &_RSSReQTL_calc_nmsum, 1},
+    {"_RSSReQTL_calc_theta", (DL_FUNC) &_RSSReQTL_calc_theta, 1},
+    {"_RSSReQTL_ld2df", (DL_FUNC) &_RSSReQTL_ld2df, 3},
+    {"_RSSReQTL_calc_cov_exp", (DL_FUNC) &_RSSReQTL_calc_cov_exp, 1},
+    {"_RSSReQTL_calc_variance_exp", (DL_FUNC) &_RSSReQTL_calc_variance_exp, 1},
+    {"_RSSReQTL_cov_2_cor_exp", (DL_FUNC) &_RSSReQTL_cov_2_cor_exp, 1},
+    {"_RSSReQTL_calcLD_exp", (DL_FUNC) &_RSSReQTL_calcLD_exp, 5},
+    {"_RSSReQTL_sp_calcLD_exp", (DL_FUNC) &_RSSReQTL_sp_calcLD_exp, 5},
+    {"_RSSReQTL_sp_calcLD_symm_exp", (DL_FUNC) &_RSSReQTL_sp_calcLD_symm_exp, 5},
+    {"_RSSReQTL_orthogonalize_data_exp", (DL_FUNC) &_RSSReQTL_orthogonalize_data_exp, 2},
+    {"_RSSReQTL_rssr_orthogonalize_covar", (DL_FUNC) &_RSSReQTL_rssr_orthogonalize_covar, 1},
+    {"_RSSReQTL_map_se_exp", (DL_FUNC) &_RSSReQTL_map_se_exp, 3},
+    {"_RSSReQTL_map_beta_exp", (DL_FUNC) &_RSSReQTL_map_beta_exp, 2},
+    {"_RSSReQTL_map_eqtl_lm_exp", (DL_FUNC) &_RSSReQTL_map_eqtl_lm_exp, 2},
+    {NULL, NULL, 0}
+};
+
+RcppExport void R_init_RSSReQTL(DllInfo *dll) {
+    R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
+    R_useDynamicSymbols(dll, FALSE);
 }
