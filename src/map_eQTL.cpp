@@ -99,6 +99,7 @@ Eigen::MatrixXd map_se(const Matrix_internal genotype,const Matrix_internal expr
   Eigen::MatrixXd resmat(n,s);
   Eigen::ArrayXd resvec(s);
   Eigen::MatrixXd yh(n,s);
+  
   for(int i=0;i<g;i++){
     yh = genotype.array().rowwise()*betahat.col(i).array().transpose();
 //    Rcpp::Rcout<<yh<<std::endl;

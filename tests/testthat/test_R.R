@@ -85,18 +85,38 @@ test_that("eQTL mapping (for multiple traits & multiple SNPs) works as in R",{
   expect_equal(mse,r_semat,tolerance=1e-4)
 })
 
-test_that("new way of computing see works",{
+test_that("new way of computing se/bhat works",{
   
   
-  test_se <-   function(genotype,expression,betahat){
+  test_bhat <-   function(genotype,expression){
   
-    yh <- genotype%*%betahat
-    byh <- kronecker(betahat,genotype)
-    bresid 
-    
-    
-    
+    n <- nrow(genotype)
+    g <- ncol(expression)
+    s <- ncol(genotype)
+    bhat <- matrix(0,g,s)
+    ngenotype <- apply(genotype,2,function(x)x/sum(x^2))
+    # ssx <- apply(genotype,2,function(x)sum(x^2))
+    for(j in 1:g){
+      for(k in 1:s){
+        for(i in 1:n){
+          bhat[j,k] <- bhat[j,k]+(ngenotype[i,k]*expression[i,j])
+        }
+      }
+    }
+    return(bhat)
   }
+  n <- 500
+  g <- 50
+  s <- 100
+  genotype <- matrix(runif(n*s),n,s)
+  expression <- matrix(runif(n*g),n,g)
+  
+  mbhat <- map_beta_exp(genotype,expression)
+  rbhat <- test_bhat(genotype,expression)
+  expect_equal(t(rbhat),mbhat)
+  plot(c(t(rbhat)),c(mbhat))
+  
+  
 })
 
 
